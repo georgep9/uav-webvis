@@ -3,17 +3,21 @@
 
     <NavBar/>
 
+    <AirQuality/>
+
   </div>
 </template>
 
 <script>
 
 import NavBar from './components/NavBar.vue';
+import AirQuality from './components/AirQuality.vue'
 
 export default {
   name: 'App',
   components: {
-    NavBar
+    NavBar,
+    AirQuality
   }
 }
 
@@ -21,7 +25,4 @@ export default {
 
 <style>
 @import './assets/css/bootstrap.min.css';
-#nav-time {
-  color: white;
-}
 </style>
