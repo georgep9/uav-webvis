@@ -1,33 +1,22 @@
 <template>
   <div id="app">
-    <nav class="navbar navbar-dark bg-primary">
-      <div class="container-fluid" id="title">
-        <div class="navbar-brand">UAV Payload Data Visualization </div>
-        <div id="nav-time">{{ currentTime }}</div>
-      </div>
-    </nav>
+
+    <NavBar/>
 
   </div>
 </template>
 
 <script>
 
-import time from './assets/js/time-func.js';
+import NavBar from './components/NavBar.vue';
 
 export default {
   name: 'App',
-  data() {
-    return {
-      currentTime: ""
-    }
-  },
-  created() {
-    setInterval(this.getCurrentTime, 50);
-  },
-  methods: {
-    getCurrentTime: function() { this.currentTime = time.getFullTime(new Date()) }
+  components: {
+    NavBar
   }
 }
+
 </script>
 
 <style>
