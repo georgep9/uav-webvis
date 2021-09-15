@@ -1,28 +1,38 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <nav class="navbar navbar-dark bg-primary">
+      <div class="container-fluid" id="title">
+        <div class="navbar-brand">UAV Payload Data Visualization </div>
+        <div id="nav-time">{{ currentTime }}</div>
+      </div>
+    </nav>
+
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+
+import time from './assets/js/time-func.js';
 
 export default {
   name: 'App',
-  components: {
-    HelloWorld
+  data() {
+    return {
+      currentTime: ""
+    }
+  },
+  created() {
+    setInterval(this.getCurrentTime, 50);
+  },
+  methods: {
+    getCurrentTime: function() { this.currentTime = time.getFullTime(new Date()) }
   }
 }
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+@import './assets/css/bootstrap.min.css';
+#nav-time {
+  color: white;
 }
 </style>
