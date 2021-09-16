@@ -1,9 +1,9 @@
 <template>
   <div id="app">
 
-    <NavBar/>
-
-    <AirQuality/>
+    <NavBar id="nav-bar-comp"/>
+    <AirQuality id="air-quality-comp"/>
+    <ImageProcessing id="image-processing-comp"/>
 
   </div>
 </template>
@@ -11,13 +11,15 @@
 <script>
 
 import NavBar from './components/NavBar.vue';
-import AirQuality from './components/AirQuality.vue'
+import AirQuality from './components/AirQuality.vue';
+import ImageProcessing from './components/ImageProcessing.vue';
 
 export default {
   name: 'App',
   components: {
     NavBar,
-    AirQuality
+    AirQuality,
+    ImageProcessing
   }
 }
 
@@ -25,4 +27,14 @@ export default {
 
 <style>
 @import './assets/css/bootstrap.min.css';
+#air-quality-comp {
+  width: 50%;
+  float: left;
+  padding: 10px;
+}
+#image-processing-comp {
+  width: 50%;
+  float: left;
+  padding: 10px;
+}
 </style>

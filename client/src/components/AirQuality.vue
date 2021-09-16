@@ -1,18 +1,28 @@
 <template>
   <div id="airquality">
-    <div id="live-data">
-        <canvas id="live-data-bar"></canvas>
-    </div>
+
+    <AQBarChart/>
+    <AQLineChart/>
+    
   </div>
 </template>
 
 <script>
 
+import AQBarChart from './AQBarChart.vue';
+import AQLineChart from './AQLineChart.vue'
+
 export default {
 
-  name: 'AirQuality'
+  name: 'AirQuality',
+
+  components: {
+    AQBarChart,
+    AQLineChart
+  }
 
 }
+
 </script>
 
 <style>
