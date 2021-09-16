@@ -1,7 +1,7 @@
 <template>
   <div id="image-processing">
 
-    <h1>Image Processing</h1>
+    <h4 style="text-align: center">Image Processing</h4>
     
   </div>
 </template>

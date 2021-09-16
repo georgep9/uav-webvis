@@ -29,12 +29,14 @@ export default {
 @import './assets/css/bootstrap.min.css';
 #air-quality-comp {
   width: 50%;
+  min-width: 375px;
   float: left;
-  padding: 10px;
+  padding: 20px;
 }
 #image-processing-comp {
   width: 50%;
+  min-width: 375px;
   float: left;
-  padding: 10px;
+  padding: 20px;
 }
 </style>

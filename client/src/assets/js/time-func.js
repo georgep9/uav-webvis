@@ -22,11 +22,13 @@ function getYear (time) {
 }
 
 function getTimestamp (time) {
-    const timestamp = time.getHours() + ":" + 
+    var timestamp = time.getHours() + ":" + 
         time.getMinutes() + ":" + 
-        time.getSeconds() + "." +
-        Math.round(time.getMilliseconds() / 100)
-    return timestamp;
+        time.getSeconds() + ".";
+    var miliseconds = Math.round(time.getMilliseconds() / 100);
+    if (miliseconds == 10) { miliseconds = 0; }
+    timestamp = timestamp + miliseconds
+    return timestamp
 }
 
 function getFullTime (time) {
