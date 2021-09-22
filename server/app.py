@@ -1,9 +1,11 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 
 import random
 import time
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/')
 def hw():
@@ -25,11 +27,10 @@ def serve_aq_live():
         "nh3": {}
     }
     for sen in aq_sens:
-        norm_val = round(random.uniform(0, 1), 2)
-        scal_val = int(norm_val * 100)
-        aq_sens[sen] = {'norm': norm_val, 'scal': scal_val}
+        val = round(random.uniform(0, 1), 2)
+        aq_sens[sen] = {'val': val}
 
-    live_aq = {'ts': ts, 'data': aq_sens}
+    live_aq = {'ts': ts, 'sensors': aq_sens}
 
     return jsonify(live_aq)
 
@@ -44,7 +45,7 @@ def serve_aq_sen():
 
     norm_val = round(random.uniform(0, 1), 2)
 
-    sen_data = {'ts': ts, 'data': norm_val}
+    sen_data = {'ts': ts, 'val': norm_val}
 
     return jsonify(sen_data)
 
