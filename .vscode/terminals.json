@@ -1,0 +1,27 @@
+{
+  "autorun": true,
+  "terminals": [
+    {
+      "name": "bash",
+      "description": "Regular terminal",
+      "focus": true
+    },
+    {
+      "name": "Client",
+      "description": "Vue front-end",
+      "commands": [
+        "cd client",
+        "yarn serve"
+      ]
+    },
+    {
+      "name": "Server",
+      "description": "Flask back-end",
+      "commands": [
+        "conda activate wvi",
+        "cd server",
+        "flask run"
+      ]
+    }
+  ]
+}
