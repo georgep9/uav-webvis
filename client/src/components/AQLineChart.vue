@@ -23,8 +23,9 @@ export default {
         labels: timestamps,
         datasets: [
           {
-            backgroundColor: '#f87979',
-            data: values
+            data: values,
+            lineTension: 0,
+            fill: false
           }
         ]
       };
@@ -37,5 +38,13 @@ export default {
 <style>
 #line-chart-container {
   height: 100%;
+}
+#line-chart {
+  width: 100%;
+  max-width: 800px;
+  
+  height: 100%;
+  max-height: 250px;
+  margin: 0 auto;
 }
 </style>

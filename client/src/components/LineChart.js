@@ -6,7 +6,9 @@ export default {
   props: ["chartdata"],
   data: () => ({
     options: {
-      responsive: true
+      maintainAspectRatio: false,
+      responsive: true,
+      legend: { display: false }
     }
   }),
   mounted () {
