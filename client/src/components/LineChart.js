@@ -18,7 +18,6 @@ export default {
     chartdata: function(val) {
       this.$data._chart.data.labels = val.labels;
       this.$data._chart.data.datasets[0].data = val.datasets[0].data;
-      console.log(this.$data._chart.data);
       this.$data._chart.update();
     }
   }

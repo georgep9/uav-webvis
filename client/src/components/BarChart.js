@@ -21,17 +21,21 @@ export default {
       },
       legend: { display: false },
       animation: {
+        // draw value labels on bars
         onProgress: function() {
           var ctx = this.ctx;
           ctx.font = "14px Arial";
           ctx.textAlign = "center";
-          this.data.datasets.forEach(data => {
-            const value = data.label;
-            const _model = data._meta['0'].data['0']._model;
-            const x = _model.x;
-            const y = _model.y + (_model.base - _model.y)/2 + 5;
-            ctx.fillText(value,x,y)
-          });
+          if (this.data.datasets){
+            this.data.datasets.forEach(data => {
+              const value = data.label;
+              const meta_data_chart = Object.values(data._meta)[0].data[0]
+              const _model = meta_data_chart._model;
+              const x = _model.x;
+              const y = _model.y + (_model.base - _model.y)/2 + 5;
+              ctx.fillText(value,x,y)
+            });
+          }
         },
         duration: 500
       },

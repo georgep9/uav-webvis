@@ -13,7 +13,8 @@ import AQLineChart from './AQLineChart.vue';
 
 import time from '../assets/js/time-func.js'
 
-const maxSteps = 8;
+const sensCnt = 8;
+const maxLineSteps = 20;
 
 export default {
 
@@ -30,14 +31,14 @@ export default {
   }),
 
   mounted() {
-    setInterval(this.fetchBarData, 500);
-    setInterval(this.fetchLineData, 1000);
+    setInterval(this.fetchBarData, 100);
+    setInterval(this.fetchLineData, 100);
   },
 
   methods: {
     fetchBarData: function() {
       var newData = new Map();
-      for(let i = 0; i<maxSteps; i++){
+      for(let i = 0; i<sensCnt; i++){
         const type = i;
         const value = Math.round(Math.random()*100) / 100;
         const scaledValue = Math.round(value*100);
@@ -51,7 +52,7 @@ export default {
     if (this.lineData === null) { 
       this.lineData  = new Array(new Array(), new Array());
     }
-    else if (this.lineData[0].length >= maxSteps) { 
+    else if (this.lineData[0].length >= maxLineSteps) { 
       this.lineData[0].shift();
       this.lineData[1].shift();
     }
