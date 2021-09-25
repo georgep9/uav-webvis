@@ -2,7 +2,18 @@
   <div id="airquality">
 
     <AQBarChart id="aq-bar-chart" :aqData="barData"/>
-    <AQLineChart id="aq-line-chart" :histData="lineData" style="padding-top: 20px"/>
+    
+    <div id="sensor-buttons">
+      <button id="sensor-button" type="button"
+        style="font-size: max(min(1.5vw, 16px), 9px); font-weight:bold; margin:1%; width:12%; padding:0"
+        v-for="sensor in sensors" :key="sensor" :ref="sensor"
+        v-bind:class="[selected === sensor ? 'btn btn-primary' : 'btn btn-secondary']"
+        v-on:click="changeSelection(sensor)">
+        {{ sensor.toUpperCase() }}
+      </button>
+    </div>
+
+    <AQLineChart id="aq-line-chart" :sensorName="selected" :histData="lineData" style="padding-top: 20px"/>
     
   </div>
 </template>
@@ -12,7 +23,6 @@
 
 import AQBarChart from './AQBarChart.vue';
 import AQLineChart from './AQLineChart.vue';
-
 import time from '../assets/js/time-func.js'
 
 const maxLineSteps = 20;
@@ -28,6 +38,7 @@ export default {
 
   data: () => ({
     sensors: [],
+    selected: null,
     barData: null,
     barDataMax: {},
     barDataMin: {},
@@ -40,6 +51,11 @@ export default {
   },
 
   methods: {
+
+    changeSelection: function(sensor) {
+      this.lineData = null;
+      this.selected = sensor; 
+    },
 
     fetchBarData: async function() {
 
@@ -54,11 +70,12 @@ export default {
       }
 
       const data = liveData.sensors;
-      const sensors = Object.keys(data);
+      this.sensors = Object.keys(data);
 
+      if (this.selected === null) { this.selected = this.sensors[0]; }
+      
       var newBarData = new Map();
-      sensors.forEach(sensor => {
-
+      this.sensors.forEach(sensor => {
         const val = data[sensor].val;
         
         // update normalisation scales
@@ -73,17 +90,19 @@ export default {
 
         const scaledVal = val / this.barDataMax[sensor] * 100;
         newBarData.set(sensor, {'normal': val, 'scaled': scaledVal})
-
       });
       this.barData = newBarData;
+
     },
 
     fetchLineData: async function() {
 
+      if (this.selected === null) {return;}
+
       let sensorData;
       try {
         sensorData = await 
-          fetch(`${process.env.VUE_APP_API_HOST}/api/aq/sen`)
+          fetch(`${process.env.VUE_APP_API_HOST}/api/aq/sen?sensor=${this.selected}`)
           .then((res) => res.json());
       } catch (e) {
         return;
@@ -113,4 +132,11 @@ export default {
 </script>
 
 <style>
+#sensor-buttons {
+  display: flex; 
+  justify-content: space-around;
+  margin:0 auto;
+  max-width: 800px;
+  padding-left:1%;
+}
 </style>

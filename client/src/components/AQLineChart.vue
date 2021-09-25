@@ -1,7 +1,7 @@
 <template>
-  <div id="line-chart-container">
-    <h4 style="text-align: center">History</h4>
-    <line-chart v-if="chartdata !== null" :chartdata="chartdata" id="line-chart"></line-chart>
+  <div id="line-chart-container" v-if="chartdata !== null">
+    <h4 style="text-align: center"> {{ sensorName.toUpperCase() }} History</h4>
+    <line-chart :chartdata="chartdata" id="line-chart"></line-chart>
   </div>
 </template>
 
@@ -12,7 +12,7 @@ import LineChart from './LineChart.js';
 
 export default {
   name: 'AQLineChart',
-  props: ['histData'],
+  props: ['sensorName', 'histData'],
   components: { LineChart },
   data: () => ({ chartdata: null }),
   watch: {

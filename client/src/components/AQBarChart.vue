@@ -1,7 +1,7 @@
 <template>
-  <div id="bar-chart-container">
-    <h4 style="text-align: center">Air Quality</h4>
-    <bar-chart v-if="chartdata !== null" :chartdata="chartdata" id="bar-chart"></bar-chart>
+  <div id="bar-chart-container" v-if="chartdata !== null">
+    <h4 style="text-align: center">Live Air Quality</h4>
+    <bar-chart :chartdata="chartdata" id="bar-chart"></bar-chart>
   </div>
 </template>
 

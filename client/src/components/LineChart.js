@@ -8,7 +8,8 @@ export default {
     options: {
       maintainAspectRatio: false,
       responsive: true,
-      legend: { display: false }
+      legend: { display: false },
+      tooltips: { enabled: false }
     }
   }),
   mounted () {
