@@ -1,11 +1,16 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from waitress import serve
+import logging
 
 import random
 import time
 
 app = Flask(__name__)
 CORS(app)
+
+logger = logging.getLogger('waitress')
+logger.setLevel(logging.DEBUG)
 
 @app.route('/')
 def hw():
@@ -50,4 +55,5 @@ def serve_aq_sen():
     return jsonify(sen_data)
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0')
+    #app.run(host='0.0.0.0')
+    serve(app, host="0.0.0.0", port=5000)
