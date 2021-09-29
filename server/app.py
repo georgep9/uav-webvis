@@ -49,3 +49,5 @@ def serve_aq_sen():
 
     return jsonify(sen_data)
 
+if __name__ == "__main__":
+    app.run(host='0.0.0.0')
