@@ -71,13 +71,13 @@ def get_aq_sen():
 
     try:
         response = table.query(
-            ProjectionExpression="#ts, " + sensor,
-            ExpressionAttributeNames={"#ts": "timestamp"},
+            ProjectionExpression="#ts, #sen",
+            ExpressionAttributeNames={"#ts": "timestamp", "#sen": sensor},
             KeyConditionExpression=Key('data_type').eq("air_quality"),
             ScanIndexForward=False,
             Limit=samples
         )
-        items = response["Items"]
+        items = reversed(response["Items"])
 
         aq_sen = []
         for item in items:

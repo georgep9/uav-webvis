@@ -8,7 +8,7 @@ api_endpoint = "http://127.0.0.1:5000/api/aq"
 
 if __name__ == "__main__":
 
-  for i in range(1):
+  while(True):
 
     timestamp = round(time.time() * 1000)
     data = {
@@ -30,4 +30,4 @@ if __name__ == "__main__":
     print("Response:", res)
     print()
 
-    time.sleep(0.25)
+    time.sleep(0.1)
