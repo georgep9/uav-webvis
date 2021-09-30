@@ -102,7 +102,7 @@ export default {
       let sensorData;
       try {
         sensorData = await 
-          fetch(`${process.env.VUE_APP_API_HOST}/api/aq/sen?sensor=${this.selected}`)
+          fetch(`${process.env.VUE_APP_API_HOST}/api/aq/live`)
           .then((res) => res.json());
       } catch (e) {
         return;
@@ -110,7 +110,7 @@ export default {
       
       const unixTs = sensorData.ts;
       const ts = time.getTimestamp(new Date(unixTs));
-      const val = sensorData.val;
+      const val = sensorData.sensors[this.selected].val;
 
       if (this.lineData === null) { 
         // [[ts], [val]]

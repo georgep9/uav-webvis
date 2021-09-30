@@ -4,6 +4,7 @@ from waitress import serve
 import boto3
 from boto3.dynamodb.conditions import Key
 import simplejson as json
+from decimal import Decimal
 import logging
 import random
 import time
@@ -19,7 +20,7 @@ def hw():
     return "<h1>Hello, world</h1>"
 
 @app.route('/api/aq/live', methods=['GET'])
-def serve_aq_live():
+def get_aq_live():
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table("uav_wvi")
 
@@ -42,10 +43,10 @@ def serve_aq_live():
 
     except Exception as e:
         print(e)
-        return "something went wrong"
+        return str("[ERR] Execption caught while querying database:\n", e)
 
 @app.route('/api/aq/sen', methods=['GET'])
-def serve_aq_sen():
+def get_aq_sen():
 
     ts = round(time.time() * 1000)
 
@@ -58,6 +59,33 @@ def serve_aq_sen():
     sen_data = {'ts': ts, 'val': norm_val}
 
     return json.dumps(sen_data)
+
+
+
+@app.route('/api/aq', methods=["POST"])
+def post_aq():
+
+    post_json = json.loads(request.get_json())
+
+    if "ts" not in post_json and "data" not in post_json:
+        return "[ERR] Bad format."
+
+    ts = post_json["ts"]
+    sensors = post_json["data"]
+
+    new_db_item = {"data_type": "air_quality", "timestamp": ts}
+    new_db_item.update(sensors)
+    new_db_item = json.loads(json.dumps(new_db_item), use_decimal=True)
+
+    try:
+        dynamodb = boto3.resource('dynamodb')
+        table = dynamodb.Table("uav_wvi")
+        table.put_item(Item=new_db_item)
+        return "Success"
+    except Exception as e:
+        print(e)
+        return str("[ERR] Execption caught while creating item in database:\n", e)
+
 
 if __name__ == "__main__":
     #app.run(host='0.0.0.0')
