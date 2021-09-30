@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import requests
 from waitress import serve
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -15,9 +16,11 @@ CORS(app)
 logger = logging.getLogger('waitress')
 logger.setLevel(logging.DEBUG)
 
+
 @app.route('/')
 def hw():
     return "<h1>Hello, world</h1>"
+
 
 @app.route('/api/aq/live', methods=['GET'])
 def get_aq_live():
@@ -27,7 +30,7 @@ def get_aq_live():
     try:
         response = table.query(
             KeyConditionExpression=Key('data_type').eq("air_quality"),
-            ScanIndexForward=True,
+            ScanIndexForward=False,
             Limit=1
         )
         item = response["Items"][0]
@@ -43,23 +46,50 @@ def get_aq_live():
 
     except Exception as e:
         print(e)
-        return str("[ERR] Execption caught while querying database:\n", e)
+        return json.dumps("[ERR] Execption caught while querying database.")
+
 
 @app.route('/api/aq/sen', methods=['GET'])
 def get_aq_sen():
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table("uav_wvi")
 
-    ts = round(time.time() * 1000)
+    sensor = request.args.get('sensor')
+    samples = request.args.get('samples')
 
-    if request.args.get('from') and request.args.get('to'):
-        # TODO
-        pass
+    if samples is None or sensor is None:
+        return json.dumps("[ERR] Must provide 'sensor' and 'samples' argument.")
 
-    norm_val = round(random.uniform(0, 1), 2)
+    try:
+        samples = int(samples)
+        if samples < 1 or samples > 500:
+            raise Exception
+    except:
+        return json.dumps("[ERR] Argument 'samples' must be an integer between 1 and 500.")
 
-    sen_data = {'ts': ts, 'val': norm_val}
+    print(sensor)
 
-    return json.dumps(sen_data)
+    try:
+        response = table.query(
+            ProjectionExpression="#ts, " + sensor,
+            ExpressionAttributeNames={"#ts": "timestamp"},
+            KeyConditionExpression=Key('data_type').eq("air_quality"),
+            ScanIndexForward=False,
+            Limit=samples
+        )
+        items = response["Items"]
 
+        aq_sen = []
+        for item in items:
+            ts = item["timestamp"]
+            val = item[sensor]
+            aq_sen.append({"ts": ts, "val": val})
+
+        return json.dumps(aq_sen)
+
+    except Exception as e:
+        print(e)
+        return json.dumps("[ERR] Execption caught while querying database.")
 
 
 @app.route('/api/aq', methods=["POST"])
@@ -68,7 +98,7 @@ def post_aq():
     post_json = json.loads(request.get_json())
 
     if "ts" not in post_json and "data" not in post_json:
-        return "[ERR] Bad format."
+        return json.dumps("[ERR] Bad format.")
 
     ts = post_json["ts"]
     sensors = post_json["data"]
@@ -84,7 +114,7 @@ def post_aq():
         return "Success"
     except Exception as e:
         print(e)
-        return str("[ERR] Execption caught while creating item in database:\n", e)
+        return json.dumps("[ERR] Execption caught while creating item in database.")
 
 
 if __name__ == "__main__":
