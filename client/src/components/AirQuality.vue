@@ -31,8 +31,8 @@ import AQBarChart from './AQBarChart.vue';
 import AQLineChart from './AQLineChart.vue';
 import time from '../assets/js/time-func.js'
 
-const fetchDelay = 100;
-const maxLineSteps = 20;
+const fetchDelay = 50;
+const updateDelay = 100;
 
 export default {
 
@@ -46,15 +46,23 @@ export default {
   data: () => ({
     sensors: [],
     selected: null,
+
+    lastTs: 0,
+    liveData: {new: false, data: null},
+    histData: {new: false, data: null},
+
     barData: null,
     barDataMax: {},
     barDataMin: {},
+
     lineData: new Array(new Array(), new Array()),
-    lastTs: 0,
+
+    maxHistSamples: 20
   }),
 
   mounted() {
-    setTimeout(this.fetchData, fetchDelay);
+    setTimeout(this.fetchData, Math.round(fetchDelay/2));
+    setInterval(this.updateChartData, updateDelay);
   },
 
   methods: {
@@ -69,60 +77,72 @@ export default {
     fetchData: async function () {
 
       if (this.lineData[0].length === 0 && this.selected !== null){
-        const senHistData = await this.fetchSenHistData();
-        if (senHistData) { this.updateLineData(senHistData); }
-      } else {
-        const liveData = await this.fetchLiveData();
-        if(liveData) {
-          this.updateBarData(liveData[liveData.length - 1].sensors);
-          
-          if (this.lineData[0].length !== 0) {
-            this.updateLineData(liveData);
-          }
+        const fetchedData = await this.fetchSenHistData();
+        if (fetchedData) { 
+          this.histData.new = true;
+          this.histData.data = fetchedData; 
+        }
+      } 
+      else {
+        const fetchedData = await this.fetchLiveData();
+        if(fetchedData) {
+          this.liveData.new = true;
+          this.liveData.data = fetchedData;
         }
       }
 
       setTimeout(this.fetchData, fetchDelay);
     },
 
-    fetchLiveData: async function() {
+    updateChartData: function() {
 
-      const api_url = `${process.env.VUE_APP_API_HOST}/api/aq/live?from_ts=${this.lastTs}`;
-
-      let liveData;
-      try {
-        liveData = await 
-          fetch(api_url)
-          .then((res) => res.json());
-      } catch (e) {
-        console.log('error')
+      if (this.liveData.new === false && this.histData.new === false) {
         return;
       }
 
-      if (liveData.length === 0) { return; }
+      else if (this.liveData.new === true && this.histData.new === false) {
+        const chartData = this.liveData.data;
 
-      this.sensors = Object.keys(liveData[0].sensors);
-      if (this.selected === null) { this.selected = this.sensors[0]; }
+        this.lastTs = chartData[chartData.length - 1].ts
+        this.sensors = Object.keys(chartData[0].sensors);
+        if (this.selected === null) { this.selected = this.sensors[0]; }
 
-      this.lastTs = liveData[liveData.length - 1].ts
-      
-      return liveData;
+        this.updateBarData(chartData[chartData.length - 1].sensors)
+        if (this.lineData[0].length > 0) { this.updateLineData(chartData); }
+
+        this.liveData.new = false;
+      }
+
+      else if (this.histData.new === true) {
+
+        this.updateLineData(this.histData.data);
+        this.histData.new = false;
+      }
+    },
+
+    fetchLiveData: async function() {
+      const apiUrl = `${process.env.VUE_APP_API_HOST}/api/aq/live?from_ts=${this.lastTs}`;
+
+      let apiData;
+      try { apiData = await fetch(apiUrl).then((res) => res.json()); }
+      catch (e) { return; }
+      if (apiData.length === 0) { return; }
+
+      return apiData;
     },
 
     fetchSenHistData: async function() {
+      let apiUrl = `${process.env.VUE_APP_API_HOST}/api/aq/sen`
+      apiUrl += `?sensor=${this.selected}&samples=${this.maxHistSamples}`;
 
-      let sensorData;
-      try {
-        sensorData = await 
-          fetch(`${process.env.VUE_APP_API_HOST}/api/aq/sen?sensor=${this.selected}&samples=${maxLineSteps}`)
-          .then((res) => res.json());
-      } catch (e) {
-        return;
-      }
+      let apiData;
+      try { apiData = await fetch(apiUrl).then((res) => res.json()); } 
+      catch (e) { return; }
 
-      return sensorData;
+      return apiData;
     },
 
+    
     updateBarData: function (data) {
 
       var newBarData = new Map();
@@ -148,25 +168,12 @@ export default {
 
     updateLineData: function(data) {
 
-      // don't update if new data has not come through
-      // if (time.getTimestamp(new Date(data.at(-1).ts)) 
-      //   === this.lineData[0].at(-1)) {
-      //   return; 
-      // }
-
-      //console.log(data)
-
       data.forEach(sample => {
         const unixTs = sample.ts;
         const ts = time.getTimestamp(new Date(unixTs))
-        let val;
-        if ("sensors" in sample){
-          val = sample.sensors[this.selected].val;
-        } else {
-          val = sample.val;
-        }
+        const val = sample.sensors[this.selected].val;
 
-        if (this.lineData[0].length >= maxLineSteps) { 
+        if (this.lineData[0].length >= this.maxHistSamples) { 
           this.lineData[0].shift();
           this.lineData[1].shift();
         }
