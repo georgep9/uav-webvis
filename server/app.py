@@ -43,7 +43,7 @@ def get_aq_live():
         response = table.query(
             KeyConditionExpression=
                 Key('data_type').eq("air_quality") &
-                Key('timestamp').gte(from_ts),
+                Key('timestamp').gt(from_ts),
             ScanIndexForward=False,
             Limit=query_limit)
         items = reversed(response["Items"])
@@ -103,7 +103,7 @@ def get_aq_sen():
         for item in items:
             ts = item["timestamp"]
             val = item[sensor]
-            aq_sen.append({"ts": ts, "val": val})
+            aq_sen.append({"ts": ts, sensor: {"val": val}})
 
         return json.dumps(aq_sen)
 
