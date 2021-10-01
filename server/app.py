@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-import requests
 from waitress import serve
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -25,13 +24,32 @@ def hw():
     return "<h1>Hello, world</h1>"
 
 
+# convert db items list to 
+# json response for front-end
+def process_json_res(db_items):
+    samples = []
+    for item in db_items:
+        ts = item["timestamp"]
+        sensors = {}
+        for sensor in item.keys():
+            if sensor != "timestamp" \
+            and sensor != "data_type" \
+            and sensor != "ttl":
+                sensors[sensor] = {'val': item[sensor]} 
+        sample = {'ts': ts, 'sensors': sensors}
+        samples.append(sample)
+
+    response = json.dumps(samples)
+    length = len(samples)
+    return (response, length)
+
+
 @app.route('/api/aq/live', methods=['GET'])
 def get_aq_live():
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table("uav_wvi")
 
     try:
-        
         query_limit = 1
         from_ts = 0
 
@@ -40,32 +58,22 @@ def get_aq_live():
             from_ts = int(from_ts_arg)
             query_limit = query_lim_max
         
-        response = table.query(
+        db_res = table.query(
             KeyConditionExpression=
                 Key('data_type').eq("air_quality") &
                 Key('timestamp').gt(from_ts),
             ScanIndexForward=False,
             Limit=query_limit)
-        items = reversed(response["Items"])
-
-        samples = []
-        for item in items:
-            ts = item["timestamp"]
-            sensors = {}
-            for sensor in item.keys():
-                if sensor != "timestamp" \
-                and sensor != "data_type" \
-                and sensor != "ttl":
-                    sensors[sensor] = {'val': item[sensor]} 
-            sample = {'ts': ts, 'sensors': sensors}
-            samples.append(sample)
-
-        print('[GET /api/aq/live] Serving ' + str(len(samples)) + " samples.")
-        return json.dumps(samples)
+        db_items = reversed(db_res["Items"])
+        
+        json_res, length = process_json_res(db_items)
+        print('[GET /api/aq/live] Serving ' + str(length) + " samples.")
+        return json_res
 
     except ValueError as e:
         print(e)
         return json.dumps("[ERR] Argument 'from_ts' must be an integer of unix time.")
+
     except Exception as e:
         print(e)
         return json.dumps("[ERR] Execption caught while querying database.")
@@ -88,24 +96,18 @@ def get_aq_sen():
     except:
         return json.dumps("[ERR] Argument 'samples' must be an integer between 1 and 500.")
 
-    print(sensor)
-
     try:
-        response = table.query(
+        db_res = table.query(
             ProjectionExpression="#ts, #sen",
             ExpressionAttributeNames={"#ts": "timestamp", "#sen": sensor},
             KeyConditionExpression=Key('data_type').eq("air_quality"),
             ScanIndexForward=False,
             Limit=samples)
-        items = reversed(response["Items"])
+        db_items = reversed(db_res["Items"])
 
-        aq_sen = []
-        for item in items:
-            ts = item["timestamp"]
-            val = item[sensor]
-            aq_sen.append({"ts": ts, sensor: {"val": val}})
-
-        return json.dumps(aq_sen)
+        json_res, length = process_json_res(db_items)
+        print('[GET /api/aq/sen] Serving ' + str(length) + " samples for " + sensor + ".")
+        return json_res
 
     except Exception as e:
         print(e)
@@ -134,6 +136,7 @@ def post_aq():
         table = dynamodb.Table("uav_wvi")
         table.put_item(Item=new_db_item)
         return "Success"
+
     except Exception as e:
         print(e)
         return json.dumps("[ERR] Execption caught while creating item in database.")
