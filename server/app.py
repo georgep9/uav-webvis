@@ -16,8 +16,8 @@ CORS(app)
 logger = logging.getLogger('waitress')
 logger.setLevel(logging.DEBUG)
 
-# time to live in minutes
-ttl_min = 5
+ttl_min = 5 # time to live in minutes
+query_lim_max = 100 # max db items to query
 
 
 @app.route('/')
@@ -31,24 +31,41 @@ def get_aq_live():
     table = dynamodb.Table("uav_wvi")
 
     try:
+        
+        query_limit = 1
+        from_ts = 0
+
+        from_ts_arg = request.args.get('from_ts')
+        if from_ts_arg is not None:
+            from_ts = int(from_ts_arg)
+            query_limit = query_lim_max
+        
         response = table.query(
-            KeyConditionExpression=Key('data_type').eq("air_quality"),
+            KeyConditionExpression=
+                Key('data_type').eq("air_quality") &
+                Key('timestamp').gte(from_ts),
             ScanIndexForward=False,
-            Limit=1
-        )
-        item = response["Items"][0]
+            Limit=query_limit)
+        items = reversed(response["Items"])
 
-        ts = item["timestamp"]
-        sensors = {}
-        for sensor in item.keys():
-            if sensor != "timestamp" \
-            and sensor != "data_type" \
-            and sensor != "ttl":
-                sensors[sensor] = {'val': item[sensor]}
-                
-        aq_live = {'ts': ts, 'sensors': sensors}
-        return json.dumps(aq_live)
+        samples = []
+        for item in items:
+            ts = item["timestamp"]
+            sensors = {}
+            for sensor in item.keys():
+                if sensor != "timestamp" \
+                and sensor != "data_type" \
+                and sensor != "ttl":
+                    sensors[sensor] = {'val': item[sensor]} 
+            sample = {'ts': ts, 'sensors': sensors}
+            samples.append(sample)
 
+        print('[GET /api/aq/live] Serving ' + str(len(samples)) + " samples.")
+        return json.dumps(samples)
+
+    except ValueError as e:
+        print(e)
+        return json.dumps("[ERR] Argument 'from_ts' must be an integer of unix time.")
     except Exception as e:
         print(e)
         return json.dumps("[ERR] Execption caught while querying database.")
@@ -67,8 +84,7 @@ def get_aq_sen():
 
     try:
         samples = int(samples)
-        if samples < 1 or samples > 500:
-            raise Exception
+        if samples < 1 or samples > 500: raise Exception
     except:
         return json.dumps("[ERR] Argument 'samples' must be an integer between 1 and 500.")
 
@@ -80,8 +96,7 @@ def get_aq_sen():
             ExpressionAttributeNames={"#ts": "timestamp", "#sen": sensor},
             KeyConditionExpression=Key('data_type').eq("air_quality"),
             ScanIndexForward=False,
-            Limit=samples
-        )
+            Limit=samples)
         items = reversed(response["Items"])
 
         aq_sen = []

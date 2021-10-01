@@ -23,8 +23,9 @@ if __name__ == "__main__":
     }
 
     json_post = json.dumps({"ts": timestamp, "data": data})
-    print("JSON to POST:")
-    print(json_post)
+    #print("JSON to POST:")
+    #print(json_post)
+    print(timestamp)
 
     res = requests.post(api_endpoint, json = json_post)
     print("Response:", res)
