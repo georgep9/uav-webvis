@@ -20,7 +20,7 @@
       "commands": [
         "conda activate wvi",
         "cd server",
-        "flask run -h 0.0.0.0 -p 5000"
+        "python3 app.py"
       ]
     }
   ]

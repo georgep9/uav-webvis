@@ -24,7 +24,7 @@ export default {
         datasets: [
           {
             data: values,
-            lineTension: 0,
+            lineTension: 0.5,
             fill: false
           }
         ]

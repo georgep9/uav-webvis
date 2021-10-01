@@ -1,51 +1,122 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-
+import requests
+from waitress import serve
+import boto3
+from boto3.dynamodb.conditions import Key
+import simplejson as json
+from decimal import Decimal
+import logging
 import random
 import time
 
 app = Flask(__name__)
 CORS(app)
 
+logger = logging.getLogger('waitress')
+logger.setLevel(logging.DEBUG)
+
+
 @app.route('/')
 def hw():
     return "<h1>Hello, world</h1>"
 
+
 @app.route('/api/aq/live', methods=['GET'])
-def serve_aq_live():
+def get_aq_live():
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table("uav_wvi")
 
-    ts = round(time.time() * 1000)
+    try:
+        response = table.query(
+            KeyConditionExpression=Key('data_type').eq("air_quality"),
+            ScanIndexForward=False,
+            Limit=1
+        )
+        item = response["Items"][0]
 
-    aq_sens = {
-        "temp": {},
-        "press": {},
-        "hum": {},
-        "light": {},
-        "noise": {},
-        "ox": {},
-        "red": {},
-        "nh3": {}
-    }
-    for sen in aq_sens:
-        val = round(random.uniform(0, 1), 2)
-        aq_sens[sen] = {'val': val}
+        ts = item["timestamp"]
+        sensors = {}
+        for sensor in item.keys():
+            if sensor != "timestamp" and sensor != "data_type":
+                sensors[sensor] = {'val': item[sensor]}
+                
+        aq_live = {'ts': ts, 'sensors': sensors}
+        return json.dumps(aq_live)
 
-    live_aq = {'ts': ts, 'sensors': aq_sens}
+    except Exception as e:
+        print(e)
+        return json.dumps("[ERR] Execption caught while querying database.")
 
-    return jsonify(live_aq)
 
 @app.route('/api/aq/sen', methods=['GET'])
-def serve_aq_sen():
+def get_aq_sen():
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table("uav_wvi")
 
-    ts = round(time.time() * 1000)
+    sensor = request.args.get('sensor')
+    samples = request.args.get('samples')
 
-    if request.args.get('from') and request.args.get('to'):
-        # TODO
-        pass
+    if samples is None or sensor is None:
+        return json.dumps("[ERR] Must provide 'sensor' and 'samples' argument.")
 
-    norm_val = round(random.uniform(0, 1), 2)
+    try:
+        samples = int(samples)
+        if samples < 1 or samples > 500:
+            raise Exception
+    except:
+        return json.dumps("[ERR] Argument 'samples' must be an integer between 1 and 500.")
 
-    sen_data = {'ts': ts, 'val': norm_val}
+    print(sensor)
 
-    return jsonify(sen_data)
+    try:
+        response = table.query(
+            ProjectionExpression="#ts, #sen",
+            ExpressionAttributeNames={"#ts": "timestamp", "#sen": sensor},
+            KeyConditionExpression=Key('data_type').eq("air_quality"),
+            ScanIndexForward=False,
+            Limit=samples
+        )
+        items = reversed(response["Items"])
 
+        aq_sen = []
+        for item in items:
+            ts = item["timestamp"]
+            val = item[sensor]
+            aq_sen.append({"ts": ts, "val": val})
+
+        return json.dumps(aq_sen)
+
+    except Exception as e:
+        print(e)
+        return json.dumps("[ERR] Execption caught while querying database.")
+
+
+@app.route('/api/aq', methods=["POST"])
+def post_aq():
+
+    post_json = json.loads(request.get_json())
+
+    if "ts" not in post_json and "data" not in post_json:
+        return json.dumps("[ERR] Bad format.")
+
+    ts = post_json["ts"]
+    sensors = post_json["data"]
+
+    new_db_item = {"data_type": "air_quality", "timestamp": ts}
+    new_db_item.update(sensors)
+    new_db_item = json.loads(json.dumps(new_db_item), use_decimal=True)
+
+    try:
+        dynamodb = boto3.resource('dynamodb')
+        table = dynamodb.Table("uav_wvi")
+        table.put_item(Item=new_db_item)
+        return "Success"
+    except Exception as e:
+        print(e)
+        return json.dumps("[ERR] Execption caught while creating item in database.")
+
+
+if __name__ == "__main__":
+    #app.run(host='0.0.0.0')
+    serve(app, host="0.0.0.0", port=5000)
