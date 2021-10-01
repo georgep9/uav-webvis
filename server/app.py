@@ -16,6 +16,9 @@ CORS(app)
 logger = logging.getLogger('waitress')
 logger.setLevel(logging.DEBUG)
 
+# time to live in minutes
+ttl_min = 5
+
 
 @app.route('/')
 def hw():
@@ -38,7 +41,9 @@ def get_aq_live():
         ts = item["timestamp"]
         sensors = {}
         for sensor in item.keys():
-            if sensor != "timestamp" and sensor != "data_type":
+            if sensor != "timestamp" \
+            and sensor != "data_type" \
+            and sensor != "ttl":
                 sensors[sensor] = {'val': item[sensor]}
                 
         aq_live = {'ts': ts, 'sensors': sensors}
@@ -102,9 +107,11 @@ def post_aq():
 
     ts = post_json["ts"]
     sensors = post_json["data"]
+    ttl = {'ttl': int(time.time()) + 60 * ttl_min}
 
     new_db_item = {"data_type": "air_quality", "timestamp": ts}
     new_db_item.update(sensors)
+    new_db_item.update(ttl)
     new_db_item = json.loads(json.dumps(new_db_item), use_decimal=True)
 
     try:
