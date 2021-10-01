@@ -53,8 +53,10 @@ export default {
   methods: {
 
     changeSelection: function(sensor) {
-      this.lineData = null;
-      this.selected = sensor; 
+      if (this.selected !== sensor){
+        this.lineData = null;
+        this.selected = sensor;
+      }
     },
 
     fetchBarData: async function() {
