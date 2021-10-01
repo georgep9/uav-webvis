@@ -31,6 +31,7 @@ import AQBarChart from './AQBarChart.vue';
 import AQLineChart from './AQLineChart.vue';
 import time from '../assets/js/time-func.js'
 
+const fetchDelay = 100;
 const maxLineSteps = 20;
 
 export default {
@@ -48,11 +49,12 @@ export default {
     barData: null,
     barDataMax: {},
     barDataMin: {},
-    lineData: new Array(new Array(), new Array())
+    lineData: new Array(new Array(), new Array()),
+    lastTs: 0,
   }),
 
   mounted() {
-    setInterval(this.fetchData, 100);
+    setTimeout(this.fetchData, fetchDelay);
   },
 
   methods: {
@@ -71,33 +73,38 @@ export default {
         if (senHistData) { this.updateLineData(senHistData); }
       } else {
         const liveData = await this.fetchLiveData();
-        if(liveData) { 
-          this.updateBarData(liveData.sensors);
+        if(liveData) {
+          this.updateBarData(liveData[liveData.length - 1].sensors);
           
           if (this.lineData[0].length !== 0) {
-            const lineData = [{'ts': liveData.ts, 'val': liveData.sensors[this.selected].val}]
-            this.updateLineData(lineData);
+            this.updateLineData(liveData);
           }
         }
       }
+
+      setTimeout(this.fetchData, fetchDelay);
     },
 
     fetchLiveData: async function() {
 
+      const api_url = `${process.env.VUE_APP_API_HOST}/api/aq/live?from_ts=${this.lastTs}`;
+
       let liveData;
       try {
         liveData = await 
-          fetch(`${process.env.VUE_APP_API_HOST}/api/aq/live`)
+          fetch(api_url)
           .then((res) => res.json());
       } catch (e) {
         console.log('error')
         return;
       }
-      
-      const data = liveData.sensors;
 
-      this.sensors = Object.keys(data);
+      if (liveData.length === 0) { return; }
+
+      this.sensors = Object.keys(liveData[0].sensors);
       if (this.selected === null) { this.selected = this.sensors[0]; }
+
+      this.lastTs = liveData[liveData.length - 1].ts
       
       return liveData;
     },
@@ -142,15 +149,22 @@ export default {
     updateLineData: function(data) {
 
       // don't update if new data has not come through
-      if (time.getTimestamp(new Date(data.at(-1).ts)) 
-        === this.lineData[0].at(-1)) {
-        return; 
-      }
+      // if (time.getTimestamp(new Date(data.at(-1).ts)) 
+      //   === this.lineData[0].at(-1)) {
+      //   return; 
+      // }
+
+      //console.log(data)
 
       data.forEach(sample => {
         const unixTs = sample.ts;
         const ts = time.getTimestamp(new Date(unixTs))
-        const val = sample.val;
+        let val;
+        if ("sensors" in sample){
+          val = sample.sensors[this.selected].val;
+        } else {
+          val = sample.val;
+        }
 
         if (this.lineData[0].length >= maxLineSteps) { 
           this.lineData[0].shift();
