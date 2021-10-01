@@ -59,7 +59,7 @@ export default {
 
     changeSelection: function(sensor) {
       if (this.selected !== sensor){
-        this.lineData = null;
+        this.lineData = new Array(new Array(), new Array());
         this.selected = sensor;
       }
     },

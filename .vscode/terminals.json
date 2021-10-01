@@ -7,6 +7,15 @@
       "focus": true
     },
     {
+      "name": "Server",
+      "description": "Flask back-end",
+      "commands": [
+        "conda activate wvi",
+        "cd server",
+        "python3 app.py"
+      ]
+    },
+    {
       "name": "Client",
       "description": "Vue front-end",
       "commands": [
@@ -15,12 +24,19 @@
       ]
     },
     {
-      "name": "Server",
-      "description": "Flask back-end",
+      "name": "TestGet",
+      "description": "Terminal to test API GET",
       "commands": [
         "conda activate wvi",
-        "cd server",
-        "python3 app.py"
+        "cd server"
+      ]
+    },
+    {
+      "name": "TestPost",
+      "description": "Terminal to test API POST",
+      "commands": [
+        "conda activate wvi",
+        "cd server"
       ]
     }
   ]
