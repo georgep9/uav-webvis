@@ -1,25 +1,36 @@
 <template>
   <div id="airquality">
 
-    <AQBarChart id="aq-bar-chart" :aqData="barData"/>
-    
-    <div id="sensor-buttons">
-      <button id="sensor-button" type="button"
-        style="font-size: max(min(1.5vw, 16px), 9px); font-weight:bold; margin:1%; width:12%; padding:0"
-        v-for="sensor in sensors" :key="sensor" :ref="sensor"
-        v-bind:class="[selected === sensor ? 'btn btn-primary' : 'btn btn-secondary']"
-        v-on:click="changeSelection(sensor)">
-        {{ sensor.toUpperCase() }}
-      </button>
+    <div id="aq-live" v-if="barData !== null">
+      <AQBarChart id="aq-bar-chart" :aqData="barData" />
     </div>
 
-    <AQLineChart 
-      v-if="lineData !== null"
-      id="aq-line-chart" 
-      :sensorName="selected" 
-      :histData="lineData" 
-      style="padding-top: 20px"
-    />
+    <div id="aq-history" v-if="lineData !== null">
+
+      <div id="sensor-buttons">
+        <button id="sensor-button" type="button"
+          style="
+            font-size: max(min(1.5vw, 16px), 9px); 
+            font-weight:bold;
+            margin:1%;
+            width:12%;
+            padding:0
+          "
+          v-for="sensor in sensors" :key="sensor" :ref="sensor"
+          v-bind:class="[selected === sensor ? 'btn btn-primary' : 'btn btn-secondary']"
+          v-on:click="changeHistory(sensor)">
+          {{ sensor.toUpperCase() }}
+        </button>
+      </div>
+
+      <AQLineChart 
+        id="aq-line-chart" 
+        :sensorName="selected" 
+        :histData="lineData" 
+        style="padding-top: 20px"
+      />
+    
+    </div>
     
   </div>
 </template>
@@ -31,8 +42,7 @@ import AQBarChart from './AQBarChart.vue';
 import AQLineChart from './AQLineChart.vue';
 import time from '../assets/js/time-func.js'
 
-const fetchDelay = 50;
-const updateDelay = 100;
+const updateDelay = 50;
 
 export default {
 
@@ -50,78 +60,102 @@ export default {
     lastTs: 0,
     liveData: {new: false, data: null},
     histData: {new: false, data: null},
+    refreshHist: true,
 
     barData: null,
     barDataMax: {},
     barDataMin: {},
 
-    lineData: new Array(new Array(), new Array()),
+    lineData: new Array(
+      new Array(), 
+      new Array()
+    ),
 
     maxHistSamples: 20
   }),
 
+
   mounted() {
-    setTimeout(this.fetchData, Math.round(fetchDelay/2));
-    setInterval(this.updateChartData, updateDelay);
+    setTimeout(this.updateAirQuality, Math.round(updateDelay));
   },
+
 
   methods: {
 
-    changeSelection: function(sensor) {
-      if (this.selected !== sensor){
-        this.lineData = new Array(new Array(), new Array());
-        this.selected = sensor;
-      }
+    updateAirQuality: async function () {
+
+      await this.fetchData();
+      this.updateChartData();
+      setTimeout(this.updateAirQuality, updateDelay);
+
+    },
+
+    changeHistory: function(sensor) {
+      if (sensor === this.selected) { return; }
+
+      this.lineData = new Array(
+        new Array(), 
+        new Array()
+      );
+      this.selected = sensor;
+      this.refreshHist = true
     },
 
     fetchData: async function () {
 
-      if (this.lineData[0].length === 0 && this.selected !== null){
-        const fetchedData = await this.fetchSenHistData();
-        if (fetchedData) { 
-          this.histData.new = true;
-          this.histData.data = fetchedData; 
-        }
-      } 
-      else {
-        const fetchedData = await this.fetchLiveData();
-        if(fetchedData) {
-          this.liveData.new = true;
-          this.liveData.data = fetchedData;
-        }
+      let fetchHist = false;
+      if (this.selected !== null && this.refreshHist) {
+        fetchHist = true;
+        this.refreshHist = false;
       }
 
-      setTimeout(this.fetchData, fetchDelay);
+      if (fetchHist === true){
+        const fetchedData = await this.fetchSenHistData();
+        if (fetchedData) { this.histData = { new:true, data:fetchedData }; }
+      }
+      else {
+        const fetchedData = await this.fetchLiveData();
+        if (fetchedData) { this.liveData = { new:true, data:fetchedData }; }
+      }
+
     },
+
 
     updateChartData: function() {
 
-      if (this.liveData.new === false && this.histData.new === false) {
-        return;
+      if (this.liveData.new === false && this.histData.new === false)
+      { return; }
+
+      const lData = JSON.parse(JSON.stringify(this.liveData.data));
+      const hData = JSON.parse(JSON.stringify(this.histData.data));
+      const lNew = this.liveData.new;
+      const hNew = this.histData.new;
+      this.sensors = Object.keys(lData[0].sensors);
+
+      this.liveData.new = false;
+      this.histData.new = false;
+
+      if (lNew === true) { 
+        this.lastTs = lData[lData.length - 1].ts
+        this.updateBarData(lData);
+        if (this.selected !== null)
+        { this.updateLineData(lData); }
+      }
+      else if (hNew === true){
+        this.lastTs = hData[hData.length - 1].ts
+        this.updateLineData(hData);
       }
 
-      else if (this.liveData.new === true && this.histData.new === false) {
-        const chartData = this.liveData.data;
-
-        this.lastTs = chartData[chartData.length - 1].ts
-        this.sensors = Object.keys(chartData[0].sensors);
-        if (this.selected === null) { this.selected = this.sensors[0]; }
-
-        this.updateBarData(chartData[chartData.length - 1].sensors)
-        if (this.lineData[0].length > 0) { this.updateLineData(chartData); }
-
-        this.liveData.new = false;
-      }
-
-      else if (this.histData.new === true) {
-
-        this.updateLineData(this.histData.data);
-        this.histData.new = false;
-      }
+      if (this.selected === null) 
+      { this.selected = this.sensors[0]; }
+  
     },
 
+
     fetchLiveData: async function() {
-      const apiUrl = `${process.env.VUE_APP_API_HOST}/api/aq/live?from_ts=${this.lastTs}`;
+      const apiEndpoint = `${process.env.VUE_APP_API_HOST}/api/aq/live`;
+      const apiArgs = `?from_ts=${this.lastTs}`;
+      const apiUrl = apiEndpoint + apiArgs ;
 
       let apiData;
       try { apiData = await fetch(apiUrl).then((res) => res.json()); }
@@ -131,9 +165,11 @@ export default {
       return apiData;
     },
 
+
     fetchSenHistData: async function() {
-      let apiUrl = `${process.env.VUE_APP_API_HOST}/api/aq/sen`
-      apiUrl += `?sensor=${this.selected}&samples=${this.maxHistSamples}`;
+      const apiEndpoint= `${process.env.VUE_APP_API_HOST}/api/aq/sen`
+      const apiArgs = `?sensor=${this.selected}&samples=${this.maxHistSamples}`;
+      const apiUrl = apiEndpoint + apiArgs;
 
       let apiData;
       try { apiData = await fetch(apiUrl).then((res) => res.json()); } 
@@ -144,30 +180,30 @@ export default {
 
     
     updateBarData: function (data) {
+      const sensorsData = data[data.length - 1].sensors;
 
       var newBarData = new Map();
       this.sensors.forEach(sensor => {
-        const val = data[sensor].val;
+        const val = sensorsData[sensor].val;
         
         // update normalisation scales
-        if (!Object.prototype.hasOwnProperty.call(this.barDataMax, sensor) 
-            || this.barDataMax[sensor] < val) {
-          this.barDataMax[sensor] = val;
-        }
-        if (!Object.prototype.hasOwnProperty.call(this.barDataMin, sensor) 
-            || this.barDataMin[sensor] > val) {
-          this.barDataMin[sensor] = val;
-        }
+        if (!Object.prototype.hasOwnProperty.call(this.barDataMax, sensor) ||
+            this.barDataMax[sensor] < val)
+        { this.barDataMax[sensor] = val; }
+
+        if (!Object.prototype.hasOwnProperty.call(this.barDataMin, sensor) ||
+            this.barDataMin[sensor] > val)
+        { this.barDataMin[sensor] = val; }
 
         const scaledVal = val / this.barDataMax[sensor] * 100;
         newBarData.set(sensor, {'normal': val, 'scaled': scaledVal})
       });
-      this.barData = newBarData;
 
+      this.barData = newBarData;
     },
 
-    updateLineData: function(data) {
 
+    updateLineData: function(data) {
       data.forEach(sample => {
         const unixTs = sample.ts;
         const ts = time.getTimestamp(new Date(unixTs))
@@ -177,11 +213,10 @@ export default {
           this.lineData[0].shift();
           this.lineData[1].shift();
         }
-
         this.lineData[0].push(ts);
         this.lineData[1].push(val);
       })
-    }
+    },
 
   }
 }
