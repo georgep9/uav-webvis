@@ -58,6 +58,7 @@ def get_aq_live():
             from_ts = int(from_ts_arg)
             if from_ts != 0: query_limit = query_lim_max
         
+        start_t = round(time.time() * 1000)
         db_res = table.query(
             KeyConditionExpression=
                 Key('data_type').eq("air_quality") &
@@ -67,6 +68,9 @@ def get_aq_live():
         db_items = reversed(db_res["Items"])
         
         json_res, length = process_json_res(db_items)
+        end_t = round(time.time() * 1000)
+        query_dur = end_t - start_t
+        print("[DynamoDB] Query time: "  + str(query_dur) + " ms.")
         print('[GET /api/aq/live] Serving ' + str(length) + " samples.")
         return json_res
 

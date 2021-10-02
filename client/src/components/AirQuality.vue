@@ -144,10 +144,10 @@ export default {
       return apiData;
     },
 
-    updateChartData: function() {
+    updateChartData: async function() {
       const liveData = this.api.liveData;
       const histData = this.api.histData;
-      if (liveData.new === false && histData === false) { return; }
+      if (liveData.new === false && histData.new === false) { return; }
 
       this.charts.sensors = Object.keys(liveData.data[0].sensors);
 

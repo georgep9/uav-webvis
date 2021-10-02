@@ -7,10 +7,15 @@ import json
 api_endpoint = "http://127.0.0.1:5000/api/aq"
 
 if __name__ == "__main__":
+  prev_ts = round(time.time() * 1000)
 
   while(True):
 
     timestamp = round(time.time() * 1000)
+    diff = timestamp - prev_ts
+    print("delay:", diff, " ms")
+    prev_ts = timestamp
+
     data = {
       "temp": random.choice([23.5, 24, 23]),
       "red": random.choice([120, 121, 118]),
@@ -25,10 +30,10 @@ if __name__ == "__main__":
     json_post = json.dumps({"ts": timestamp, "data": data})
     #print("JSON to POST:")
     #print(json_post)
-    print(timestamp)
+    # print(timestamp)
 
     res = requests.post(api_endpoint, json = json_post)
-    print("Response:", res)
-    print()
+    # print("Response:", res)
+    # print()
 
-    time.sleep(0.1)
+    # time.sleep(0.1)
