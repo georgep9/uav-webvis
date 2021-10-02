@@ -56,7 +56,7 @@ def get_aq_live():
         from_ts_arg = request.args.get('from_ts')
         if from_ts_arg is not None:
             from_ts = int(from_ts_arg)
-            query_limit = query_lim_max
+            if from_ts != 0: query_limit = query_lim_max
         
         db_res = table.query(
             KeyConditionExpression=
