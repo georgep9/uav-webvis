@@ -46,8 +46,11 @@ dependencies:
     - jmespath==0.10.0
     - markupsafe==2.0.1
     - python-dateutil==2.8.2
+    - redis==3.5.3
     - s3transfer==0.5.0
     - simplejson==3.17.5
     - waitress==2.0.0
     - werkzeug==2.0.1
-prefix: /root/anaconda3/envs/wvi
+variables:
+  FLASK_APP: app
+prefix: /home/carbon7/anaconda3/envs/wvi

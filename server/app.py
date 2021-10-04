@@ -1,5 +1,7 @@
-from flask import Flask, jsonify, request
+from re import L
+from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
+import requests
 from waitress import serve
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -8,6 +10,7 @@ from decimal import Decimal
 import logging
 import random
 import time
+import redis
 
 app = Flask(__name__)
 CORS(app)
@@ -18,11 +21,45 @@ logger.setLevel(logging.DEBUG)
 ttl_min = 5 # time to live in minutes
 query_lim_max = 100 # max db items to query
 
+cache = redis.Redis(host="localhost", port=6379)
+cache_ttl = 100 # time to live in milliseconds
+
+aq_live_route = '/api/aq/live'
+aq_sen_route = '/api/aq/sen'
+aq_post_route = '/api/aq'
 
 @app.route('/')
 def hw():
     return "<h1>Hello, world</h1>"
 
+@app.before_request
+def check_cache():
+    method = request.method
+    path = request.path
+    ts = request.args.get('from_ts')
+
+    if (method == "GET" and 
+        path == aq_live_route and
+        ts is not None):
+        data = cache.get(aq_live_route+'/'+ts)
+        if data is not None:
+            print("[GET", aq_live_route, "] Cache hit! Returning data.")
+            return data
+
+@app.after_request
+def update_cache(res):
+    method = request.method
+    path = request.path
+    data = res.get_data()
+    
+    if (method == "GET" and 
+        path == aq_live_route and 
+        type(json.loads(data)) is list):
+
+        new_key = aq_live_route+'/'+request.args.get('from_ts')
+        cache.set(new_key, data, px=cache_ttl, nx=True)
+
+    return res
 
 # convert db items list to 
 # json response for front-end
@@ -44,7 +81,7 @@ def process_json_res(db_items):
     return (response, length)
 
 
-@app.route('/api/aq/live', methods=['GET'])
+@app.route(aq_live_route, methods=['GET'])
 def get_aq_live():
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table("uav_wvi")
@@ -83,7 +120,7 @@ def get_aq_live():
         return json.dumps("[ERR] Execption caught while querying database.")
 
 
-@app.route('/api/aq/sen', methods=['GET'])
+@app.route(aq_sen_route, methods=['GET'])
 def get_aq_sen():
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table("uav_wvi")
@@ -118,7 +155,7 @@ def get_aq_sen():
         return json.dumps("[ERR] Execption caught while querying database.")
 
 
-@app.route('/api/aq', methods=["POST"])
+@app.route(aq_post_route, methods=["POST"])
 def post_aq():
 
     post_json = json.loads(request.get_json())
