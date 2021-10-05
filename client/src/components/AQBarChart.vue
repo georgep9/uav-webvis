@@ -40,7 +40,7 @@ export default {
   max-width: 800px;
   
   height: 100%;
-  max-height: 250px;
+  max-height: 150px;
   margin: 0 auto;
 }
 </style>

@@ -29,8 +29,17 @@
         :histData="charts.hist.lineData" 
         style="padding-top: 20px"
       />
-    
+
+      <div id="history-range">
+        <p id="history-range-text" style="margin:0"><b>Range:</b> {{charts.hist.maxHistSamples}} samples</p>
+        <input id="history-range-input" type="range" class="form-range" min="20" max="100" step="10"
+          v-model="charts.hist.maxHistSamples" v-on:input="updateHistoryWindow">
+      </div>
+
     </div>
+
+    
+    
     
   </div>
 </template>
@@ -220,9 +229,19 @@ export default {
       );
       this.charts.selected = sensor;
       this.charts.refreshHist = true
-    }
+    },
 
-  }
+    updateHistoryWindow: function() {
+      const selectedSamples = this.charts.hist.maxHistSamples;
+      const currentSamples = this.charts.hist.lineData[0].length;
+
+      const startIndex = currentSamples - selectedSamples;
+      if (startIndex < 0) { return; }
+
+      this.charts.hist.lineData[0].splice(0, startIndex);
+      this.charts.hist.lineData[1].splice(0, startIndex);
+    }
+  },
 }
 
 </script>
@@ -234,5 +253,13 @@ export default {
   margin:0 auto;
   max-width: 800px;
   padding-left:1%;
+}
+#history-range {
+  margin:0 auto;
+  margin-top: 10px;
+  max-width: 800px;
+}
+#history-range-input {
+  width: 180px;
 }
 </style>
