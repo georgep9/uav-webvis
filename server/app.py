@@ -1,14 +1,10 @@
-from re import L
-from flask import Flask, jsonify, request, Response
+from flask import Flask, request
 from flask_cors import CORS
-import requests
 from waitress import serve
 import boto3
 from boto3.dynamodb.conditions import Key
 import simplejson as json
-from decimal import Decimal
 import logging
-import random
 import time
 import redis
 
@@ -43,7 +39,7 @@ def check_cache():
         ts is not None):
         data = cache.get(aq_live_route+'/'+ts)
         if data is not None:
-            print("[GET", aq_live_route, "] Cache hit! Returning data.")
+            print("[GET " + aq_live_route + "] Cache hit! Returning data.")
             return data
 
 @app.after_request
@@ -107,8 +103,8 @@ def get_aq_live():
         json_res, length = process_json_res(db_items)
         end_t = round(time.time() * 1000)
         query_dur = end_t - start_t
-        print("[DynamoDB] Query time: "  + str(query_dur) + " ms.")
-        print('[GET /api/aq/live] Serving ' + str(length) + " samples.")
+        print('[GET ' + aq_live_route + '] DDB Query time: ' + str(query_dur) + ' ms. ' + \
+            'Serving ' + str(length) + ' samples.')
         return json_res
 
     except ValueError as e:
@@ -138,6 +134,7 @@ def get_aq_sen():
         return json.dumps("[ERR] Argument 'samples' must be an integer between 1 and 500.")
 
     try:
+        start_t = round(time.time() * 1000)
         db_res = table.query(
             ProjectionExpression="#ts, #sen",
             ExpressionAttributeNames={"#ts": "timestamp", "#sen": sensor},
@@ -145,9 +142,12 @@ def get_aq_sen():
             ScanIndexForward=False,
             Limit=samples)
         db_items = reversed(db_res["Items"])
-
         json_res, length = process_json_res(db_items)
-        print('[GET /api/aq/sen] Serving ' + str(length) + " samples for " + sensor + ".")
+
+        end_t = round(time.time() * 1000)
+        query_dur = end_t - start_t
+        print('[GET ' + aq_live_route + '] DDB Query time: '  + str(query_dur) + ' ms. ' + \
+            'Serving ' + str(length) + " samples for " + sensor + ".")
         return json_res
 
     except Exception as e:
