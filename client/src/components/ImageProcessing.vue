@@ -27,7 +27,7 @@ export default {
     targets: ''
   }),
   mounted() {
-    setInterval(this.fetchImage, 100);
+    setInterval(this.fetchImage, 500);
   },
   methods: {
 
@@ -43,14 +43,21 @@ export default {
       
       this.timestamp = time.getTimestamp(new Date(apiData.ts))
       this.img = "data:image/jpeg;base64, " + apiData.image;
-      let targets_deteceted = "";
-      apiData.detected.forEach(target => {
-        this.targets_deteceted += " " + target
-      });
-      this.targets = targets_deteceted;
+      let targets_detected = "";
 
+      apiData.detected.forEach(target => { targets_detected += target + " "; });
+
+      if (this.targets !== targets_detected){
+        this.targets = targets_detected;
+        this.voiceTargets();
+      }
+
+    },
+
+    voiceTargets() {
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(new SpeechSynthesisUtterance(this.targets));
     }
-
   }
 
 }

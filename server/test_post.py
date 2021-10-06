@@ -1,15 +1,14 @@
 
 import requests
-import time
-import random
 import json
-from PIL import Image
 from io import BytesIO
 import base64
+import time
+import random
+from PIL import Image
 
-aq_endpoint = "http://127.0.0.1:5000/api/aq"
-ip_endpoint = "http://127.0.0.1:5000/api/ip/live"
-
+aq_endpoint = "http://wvi.geopat.io/api/aq"
+ip_endpoint = "http://wvi.geopat.io/api/ip/live"
 
 def post_aq():
 
@@ -46,8 +45,6 @@ def post_aq():
 
 def post_ip():
 
-  
-
   idx = 0
 
   image_links = ["https://www.brisbaneboatsforsale.com.au/wp-content/blogs.dir/176/files/2018/01/bbforsale_barcrusher.jpg", 
@@ -63,6 +60,8 @@ def post_ip():
     image = base64.b64encode(im_bytes).decode("utf-8")
     images.append(image)
 
+  targets = ["Bag", "Person", "Aruco Marker"]
+
   prev_ts = round(time.time() * 1000)
 
   while(True):
@@ -73,19 +72,18 @@ def post_ip():
     prev_ts = timestamp
 
     image = images[idx]
+    detected = [targets[idx]]
     idx = idx + 1
     if idx > 2: idx = 0
-
-    detected = []
 
     json_post = json.dumps({"ts": timestamp, "image": image, "detected": detected})
     res = requests.post(ip_endpoint, json = json_post)
    
-    time.sleep(0.5)
+    time.sleep(1)
 
   
 if __name__ == "__main__":
 
-  #post_aq()
-  post_ip()
+  post_aq()
+  #post_ip()
 

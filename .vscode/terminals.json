@@ -24,16 +24,16 @@
       ]
     },
     {
-      "name": "TestGet",
-      "description": "Terminal to test API GET",
+      "name": "TestAQ",
+      "description": "Terminal to test AQ API POST",
       "commands": [
         "conda activate wvi",
         "cd server"
       ]
     },
     {
-      "name": "TestPost",
-      "description": "Terminal to test API POST",
+      "name": "TestIP",
+      "description": "Terminal to test IP API POST",
       "commands": [
         "conda activate wvi",
         "cd server"

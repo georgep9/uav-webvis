@@ -225,7 +225,7 @@ def handle_ip_live():
         try:
             dynamodb = boto3.resource('dynamodb')
             table = dynamodb.Table("uav_wvi")
-            table.put_item(Item=new_db_item)
+            #table.put_item(Item=new_db_item)
             print("item put")
             return json.dumps("Success")
         except Exception as e:

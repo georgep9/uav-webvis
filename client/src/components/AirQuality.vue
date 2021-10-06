@@ -1,11 +1,11 @@
 <template>
-  <div id="airquality">
+  <div id="airquality" v-if="charts.live.barData !== null && charts.hist.lineData !== null">
 
-    <div id="aq-live" v-if="charts.live.barData !== null">
+    <div id="aq-live">
       <AQBarChart id="aq-bar-chart" :aqData="charts.live.barData" />
     </div>
 
-    <div id="aq-history" v-if="charts.hist.lineData !== null">
+    <div id="aq-history">
 
       <div id="sensor-buttons">
         <button id="sensor-button" type="button"
