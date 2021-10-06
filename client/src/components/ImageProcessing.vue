@@ -1,9 +1,9 @@
 <template>
-  <div id="image-processing">
+  <div id="image-processing" v-if="img !== null">
 
     <h4 style="text-align: center">Image Processing</h4>
 
-    <div id="img-container" v-if="img !== null">
+    <div id="img-container">
       <img id="img" :src="img"/>
     </div>
 
@@ -38,6 +38,8 @@ export default {
       let apiData;
       try { apiData = await fetch(apiEndpoint).then((res) => res.json()); }
       catch (e) { return; }
+
+      if (apiData === "") { return; }
       
       this.timestamp = time.getTimestamp(new Date(apiData.ts))
       this.img = "data:image/jpeg;base64, " + apiData.image;

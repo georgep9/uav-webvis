@@ -86,6 +86,6 @@ def post_ip():
   
 if __name__ == "__main__":
 
-  post_aq()
-  #post_ip()
+  #post_aq()
+  post_ip()
 
