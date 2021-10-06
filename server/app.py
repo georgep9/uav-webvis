@@ -14,7 +14,7 @@ CORS(app)
 logger = logging.getLogger('waitress')
 logger.setLevel(logging.DEBUG)
 
-ttl_min = 5 # time to live in minutes
+db_ttl_min = 5 # time to live in minutes
 query_lim_max = 100 # max db items to query
 
 cache = redis.Redis(host="localhost", port=6379)
@@ -23,6 +23,7 @@ cache_ttl = 100 # time to live in milliseconds
 aq_live_route = '/api/aq/live'
 aq_sen_route = '/api/aq/sen'
 aq_post_route = '/api/aq'
+ip_live_route = '/api/ip/live'
 
 @app.route('/')
 def hw():
@@ -165,7 +166,7 @@ def post_aq():
 
     ts = post_json["ts"]
     sensors = post_json["data"]
-    ttl = {'ttl': int(time.time()) + 60 * ttl_min}
+    ttl = {'ttl': int(time.time()) + 60 * db_ttl_min}
 
     new_db_item = {"data_type": "air_quality", "timestamp": ts}
     new_db_item.update(sensors)
@@ -176,11 +177,58 @@ def post_aq():
         dynamodb = boto3.resource('dynamodb')
         table = dynamodb.Table("uav_wvi")
         table.put_item(Item=new_db_item)
-        return "Success"
+        return json.dumps("Success")
 
     except Exception as e:
         print(e)
         return json.dumps("[ERR] Execption caught while creating item in database.")
+
+
+@app.route(ip_live_route , methods=["GET", "POST"])
+def handle_ip_live():
+
+    if request.method == "GET":
+        last_frame = cache.get("live_ip_frame")
+        if last_frame is not None: 
+            return json.dumps(last_frame)
+        else: return json.dumps("")
+
+    elif request.method == "POST":
+
+        post_json = json.loads(request.get_json())
+
+        try:
+            ts = post_json["ts"]
+            image = post_json["image"]
+            detected = post_json["detected"]
+            if (type(ts) is not int and
+                type(image) is not str and
+                type(detected) is not list):
+                raise Exception
+        except:
+            return json.dumps("[ERR] Bad format.")
+
+        cache.set("live_ip_frame", json.dumps(post_json))
+
+        if (len(detected) == 0): return json.dumps("Success")
+
+        new_db_item = {
+            "data_type": "image_processing",
+            "timestamp": ts,
+            "image": image,
+            "detected": detected,
+            "ttl": int(time.time()) + (60 * db_ttl_min)
+        }
+
+        try:
+            dynamodb = boto3.resource('dynamodb')
+            table = dynamodb.Table("uav_wvi")
+            table.put_item(Item=new_db_item)
+            print("item put")
+            return json.dumps("Success")
+        except Exception as e:
+            print(e)
+            return json.dumps("[ERR] Execption caught while creating item in database.")
 
 
 if __name__ == "__main__":
