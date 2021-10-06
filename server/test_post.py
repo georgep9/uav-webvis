@@ -46,9 +46,24 @@ def post_aq():
 
 def post_ip():
 
-  prev_ts = round(time.time() * 1000)
+  
 
   idx = 0
+
+  image_links = ["https://www.brisbaneboatsforsale.com.au/wp-content/blogs.dir/176/files/2018/01/bbforsale_barcrusher.jpg", 
+      "https://www.worldsbestbars.com/wp-content/uploads/2018/04/bar_640_480_byblosbar2_54aeaa00090de.jpg",
+      "https://www.cunard.com/content/dam/cunard/marketing-assets/destinations/brisbane-370060808-750x568.jpg.image.640.480.low.jpg"]
+
+  images = []
+  for link in image_links:
+    img= Image.open(requests.get(link, stream=True).raw)
+    im_file = BytesIO()
+    img.save(im_file, format="JPEG")
+    im_bytes = im_file.getvalue()
+    image = base64.b64encode(im_bytes).decode("utf-8")
+    images.append(image)
+
+  prev_ts = round(time.time() * 1000)
 
   while(True):
 
@@ -57,31 +72,20 @@ def post_ip():
     print("delay:", diff, " ms")
     prev_ts = timestamp
 
+    image = images[idx]
+    idx = idx + 1
+    if idx > 2: idx = 0
 
-    image_links = ["https://www.brisbaneboatsforsale.com.au/wp-content/blogs.dir/176/files/2018/01/bbforsale_barcrusher.jpg", 
-      "https://www.worldsbestbars.com/wp-content/uploads/2018/04/bar_640_480_byblosbar2_54aeaa00090de.jpg",
-      "https://www.cunard.com/content/dam/cunard/marketing-assets/destinations/brisbane-370060808-750x568.jpg.image.640.480.low.jpg"]
-
-    image_url = image_links[idx]
-
-    img= Image.open(requests.get(image_url, stream=True).raw)
-    im_file = BytesIO()
-    img.save(im_file, format="JPEG")
-    im_bytes = im_file.getvalue()
-    image = base64.b64encode(im_bytes).decode("utf-8")
-    
     detected = []
 
     json_post = json.dumps({"ts": timestamp, "image": image, "detected": detected})
-
     res = requests.post(ip_endpoint, json = json_post)
-
-    idx = idx + 1
-    if idx > 2: idx = 0
+   
+    time.sleep(0.5)
 
   
 if __name__ == "__main__":
 
-  #post_aq()
-  post_ip()
+  post_aq()
+  #post_ip()
 

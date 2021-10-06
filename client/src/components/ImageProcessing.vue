@@ -3,7 +3,7 @@
 
     <h4 style="text-align: center">Image Processing</h4>
 
-    <div id="img-container">
+    <div id="img-container" v-if="img !== null">
       <img id="img" :src="img"/>
     </div>
 
@@ -22,45 +22,30 @@ import time from '../assets/js/time-func.js';
 export default {
   name: 'ImageProcessing',
   data: () => ({ 
-    img: "https://via.placeholder.com/1024x768/eee?text=4:3",
-    index: 0,
+    img: null,
     timestamp: '',
     targets: ''
   }),
   mounted() {
-    setInterval(this.fetchImage, 1000);
+    setInterval(this.fetchImage, 100);
   },
   methods: {
 
-    fetchImage: function() {
+    fetchImage: async function() {
 
-      switch (this.index) {
+      const apiEndpoint = `${process.env.VUE_APP_API_HOST}/api/ip/live`;
 
-        case 0:
-          this.img = "https://static.scientificamerican.com/sciam/cache/file/7A715AD8-449D-4B5A-ABA2C5D92D9B5A21_source.png"
-          this.index = 1;
-          this.targets = 'Bag';
-          break;
-        case 1: 
-          this.img = "https://4.img-dpreview.com/files/p/E~TS590x0~articles/3925134721/0266554465.jpeg";
-          this.index = 2;
-          this.targets = 'Marker';
-          break;
-        case 2:
-          this.img = "https://c4.wallpaperflare.com/wallpaper/866/880/9/birds-owl-bird-wildlife-hd-wallpaper-preview.jpg";
-          this.index = 3;
-          this.targets = 'Person';
-          break;
-        case 3:
-          this.img ="https://see.news/wp-content/uploads/2020/12/UK_wildbirds-01-robin.jpg"
-          this.index = 0;
-          this.targets = 'Bag, Marker';
-          break;
-        default:
-          break;        
-      }
-
-      this.timestamp = time.getTimestamp(new Date());
+      let apiData;
+      try { apiData = await fetch(apiEndpoint).then((res) => res.json()); }
+      catch (e) { return; }
+      
+      this.timestamp = time.getTimestamp(new Date(apiData.ts))
+      this.img = "data:image/jpeg;base64, " + apiData.image;
+      let targets_deteceted = "";
+      apiData.detected.forEach(target => {
+        this.targets_deteceted += " " + target
+      });
+      this.targets = targets_deteceted;
 
     }
 

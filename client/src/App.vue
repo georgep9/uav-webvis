@@ -3,7 +3,7 @@
 
     <NavBar id="nav-bar-comp"/>
     <AirQuality id="air-quality-comp"/>
-    <!--ImageProcessing id="image-processing-comp"/>-->
+    <ImageProcessing id="image-processing-comp"/>
 
   </div>
 </template>
@@ -12,14 +12,14 @@
 
 import NavBar from './components/NavBar.vue';
 import AirQuality from './components/AirQuality.vue';
-//import ImageProcessing from './components/ImageProcessing.vue';
+import ImageProcessing from './components/ImageProcessing.vue';
 
 export default {
   name: 'App',
   components: {
     NavBar,
     AirQuality,
-    //ImageProcessing
+    ImageProcessing
   }
 }
 

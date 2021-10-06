@@ -47,13 +47,15 @@ def check_cache():
 def update_cache(res):
     method = request.method
     path = request.path
+    ts = request.args.get('from_ts')
     data = res.get_data()
     
     if (method == "GET" and 
-        path == aq_live_route and 
+        path == aq_live_route and
+        ts is not None and
         type(json.loads(data)) is list):
 
-        new_key = aq_live_route+'/'+request.args.get('from_ts')
+        new_key = aq_live_route+'/'+ts
         cache.set(new_key, data, px=cache_ttl, nx=True)
 
     return res
@@ -190,7 +192,7 @@ def handle_ip_live():
     if request.method == "GET":
         last_frame = cache.get("live_ip_frame")
         if last_frame is not None: 
-            return json.dumps(last_frame)
+            return last_frame
         else: return json.dumps("")
 
     elif request.method == "POST":
