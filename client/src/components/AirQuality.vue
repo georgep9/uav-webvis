@@ -2,6 +2,7 @@
   <div id="airquality" v-if="charts.live.barData !== null && charts.hist.lineData !== null">
 
     <div id="aq-live">
+      <h4 style="text-align: center">Live Air Quality</h4>
       <AQBarChart id="aq-bar-chart" :aqData="charts.live.barData" />
     </div>
 
@@ -86,14 +87,13 @@ export default {
           new Array()
         )
       },
-    }
+    },
+
+    initLoad: true
     
   }),
 
-  mounted() {
-    //setTimeout(this.update, updateDelay);
-    this.update();
-  },
+ mounted() { this.update(); },
 
   methods: {
 
@@ -101,6 +101,10 @@ export default {
       for(;;) {
         await this.fetchData();
         this.updateChartData();
+        if (this.initLoad) {
+          this.initLoad = false; 
+          this.charts.refreshHist = true;
+        }
       }
     },
 
