@@ -23,7 +23,9 @@ cache_ttl = 100 # time to live in milliseconds
 aq_live_route = '/api/aq/live'
 aq_sen_route = '/api/aq/sen'
 aq_post_route = '/api/aq'
+
 ip_live_route = '/api/ip/live'
+ip_hist_route = '/api/ip/hist'
 
 @app.route('/')
 def hw():
@@ -227,7 +229,7 @@ def handle_ip_live():
             new_db_item = {
                 "data_type": "image_processing",
                 "timestamp": ts,
-                "s3_image_filename": new_s3_object_fname,
+                "s3_image_fname": new_s3_object_fname,
                 "detected": detected,
                 "ttl": int(time.time()) + (60 * db_ttl_min)
             }
@@ -238,6 +240,75 @@ def handle_ip_live():
         except Exception as e:
             print(e)
             return json.dumps("[ERR] Execption caught while creating item in database.")
+
+@app.route(ip_hist_route, methods=["GET"])
+def get_ip_history():
+
+    try:
+        before_ts = int(request.args.get("before_ts"))
+        n_frames = int(request.args.get("n_frames"))
+        if (before_ts < 0 or n_frames < 0): raise Exception
+    except Exception as e:
+        return json.dumps("[ERR] Must provide 'prev_ts' and 'n_frames' " +
+        "arguments as positive integers.")
+
+    cached_response = cache.get(request.full_path)
+    if (cached_response): 
+        print('[GET '+ ip_hist_route +'] Cache hit! Returning response')
+        return cached_response
+
+    try:
+        dynamodb = boto3.resource('dynamodb')
+        table = dynamodb.Table("uav_wvi")
+        start_t = round(time.time() * 1000)
+        db_res = table.query(
+            KeyConditionExpression=
+                Key('data_type').eq("image_processing") &
+                Key('timestamp').lt(before_ts),
+            ScanIndexForward=False,
+            Limit=n_frames)
+        end_t = round(time.time() * 1000)
+
+        db_items = list(reversed(db_res["Items"]))
+        
+        query_dur = end_t - start_t
+        print('[GET '+ ip_hist_route +'] DDB Query time: '+ str(query_dur) +
+            ' ms for ' + str(len(db_items)) + " items.")
+
+    except Exception as e:
+        print(e)
+        return json.dumps("[ERR] Execption caught while querying database.")
+
+    try:
+        s3 = boto3.resource('s3')
+
+        start_t = round(time.time() * 1000)
+        frames = []
+        for item in db_items:
+            timestamp = item["timestamp"]
+            detected = item["detected"]
+            s3_image_fname = item["s3_image_fname"]
+            s3_image_object = s3.Object("uav-wvi-ip-detected", s3_image_fname)
+            image = s3_image_object.get()['Body'].read().decode('utf-8')
+
+            frames.append({
+                "timestamp": timestamp, 
+                "detected": detected, 
+                "image": image
+            })
+        end_t = round(time.time() * 1000)
+        s3_get_dur = end_t - start_t
+        print('[GET '+ ip_hist_route +'] S3 Object reads: '+ str(s3_get_dur) +
+            ' ms for ' + str(len(frames)) + " images.")
+
+        json_res = json.dumps(frames)
+        cache.set(request.full_path, json_res, px=cache_ttl, nx=True)
+
+        return json_res
+
+    except Exception as e:
+        print(e)
+        return json.dumps("[ERR] Execption caught while processing IP history.")
 
 
 if __name__ == "__main__":
