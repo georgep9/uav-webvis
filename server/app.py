@@ -214,18 +214,25 @@ def handle_ip_live():
 
         if (len(detected) == 0): return json.dumps("Success")
 
-        new_db_item = {
-            "data_type": "image_processing",
-            "timestamp": ts,
-            "image": image,
-            "detected": detected,
-            "ttl": int(time.time()) + (60 * db_ttl_min)
-        }
-
         try:
+
+            s3 = boto3.resource('s3')
+            new_s3_object_fname = str(ts) + '.txt'
+            new_s3_object_body = bytes(image, 'utf-8')
+            new_s3_object = s3.Object('uav-wvi-ip-detected', new_s3_object_fname)
+            new_s3_object.put(Body=new_s3_object_body)
+
             dynamodb = boto3.resource('dynamodb')
             table = dynamodb.Table("uav_wvi")
-            #table.put_item(Item=new_db_item)
+            new_db_item = {
+                "data_type": "image_processing",
+                "timestamp": ts,
+                "s3_image_filename": new_s3_object_fname,
+                "detected": detected,
+                "ttl": int(time.time()) + (60 * db_ttl_min)
+            }
+            table.put_item(Item=new_db_item)
+
             print("item put")
             return json.dumps("Success")
         except Exception as e:
