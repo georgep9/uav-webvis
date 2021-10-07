@@ -2,13 +2,9 @@
   "autorun": true,
   "terminals": [
     {
-      "name": "bash",
-      "description": "Regular terminal",
-      "focus": true
-    },
-    {
       "name": "Server",
       "description": "Flask back-end",
+      "focus": true,
       "commands": [
         "conda activate wvi",
         "cd server",
@@ -28,7 +24,7 @@
       "description": "Terminal to test AQ API POST",
       "commands": [
         "conda activate wvi",
-        "cd server"
+        "cd server/aq_tests/"
       ]
     },
     {
@@ -36,7 +32,7 @@
       "description": "Terminal to test IP API POST",
       "commands": [
         "conda activate wvi",
-        "cd server"
+        "cd server/ip_tests/"
       ]
     }
   ]

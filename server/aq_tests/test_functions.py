@@ -3,13 +3,32 @@ import json
 import time
 import random
 
-aq_endpoint = ""
+api_url = "http://127.0.0.1:5000"
+aq_post_route = "/api/aq"
+aq_live_route = "/api/aq/live"
+aq_hist_route = "/api/aq/sen"
 
-def post_aq():
+
+def get_aq_live(last_ts=None, from_to_arg=""):
+  req_url = api_url + aq_live_route
+  if last_ts is not None: 
+    req_url = req_url + str(from_to_arg)
+
+  response = requests.get(req_url)
+  return response.json()
+
+
+def get_aq_sen(sensor, samples):
+  args={"sensor": sensor, "samples": samples}
+  response = requests.get(api_url + aq_hist_route, params=args)
+  return(response.json())
+
+
+def post_aq(n_reqs):
 
   prev_ts = round(time.time() * 1000)
 
-  while(True):
+  for n in range(n_reqs):
 
     timestamp = round(time.time() * 1000)
     diff = timestamp - prev_ts
@@ -29,9 +48,6 @@ def post_aq():
 
     json_post = json.dumps({"ts": timestamp, "data": data})
 
-    requests.post(aq_endpoint, json = json_post)
+    requests.post(api_url + aq_post_route, json = json_post)
 
     time.sleep(0.1)
-
-if __name__ == "__main__":
-  post_aq()
