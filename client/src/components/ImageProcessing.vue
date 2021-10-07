@@ -12,6 +12,13 @@
       <tr> <td> {{timestamp}}</td> <td> {{targets}} </td> </tr>
     </table>
 
+    <div id="vocalise-switch-container">
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="vocalise-switch" v-model="vocalise">
+        <label class="form-check-label" for="vocalise-switch">Vocalise targets</label>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -24,7 +31,8 @@ export default {
   data: () => ({ 
     img: null,
     timestamp: '',
-    targets: ''
+    targets: '',
+    vocalise: false
   }),
   mounted() {
     setInterval(this.fetchImage, 500);
@@ -32,7 +40,6 @@ export default {
   methods: {
 
     fetchImage: async function() {
-
       const apiEndpoint = `${process.env.VUE_APP_API_HOST}/api/ip/live`;
 
       let apiData;
@@ -55,10 +62,14 @@ export default {
     },
 
     voiceTargets() {
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(new SpeechSynthesisUtterance(this.targets));
+      if (this.vocalise){
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(new SpeechSynthesisUtterance(this.targets));
+      }
     }
-  }
+  },
+
+  watch: { vocalise: function() { this.voiceTargets() } }
 
 }
 </script>
@@ -93,5 +104,11 @@ export default {
 th, td {
   padding-left: 10px;
   padding-right: 10px;
+}
+
+#vocalise-switch-container {
+  margin:0 auto;
+  margin-top: 10px;
+  max-width: 720px;
 }
 </style>
