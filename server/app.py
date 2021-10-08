@@ -245,11 +245,11 @@ def handle_ip_live():
 def get_ip_history():
 
     try:
-        before_ts = int(request.args.get("before_ts"))
-        n_frames = int(request.args.get("n_frames"))
+        before_ts = int(request.args.get("beforeTs"))
+        n_frames = int(request.args.get("nFrames"))
         if (before_ts < 0 or n_frames < 0): raise Exception
     except Exception as e:
-        return json.dumps("[ERR] Must provide 'prev_ts' and 'n_frames' " +
+        return json.dumps("[ERR] Must provide 'beforeTs' and 'nFrames' " +
         "arguments as positive integers.")
 
     cached_response = cache.get(request.full_path)
@@ -269,7 +269,7 @@ def get_ip_history():
             Limit=n_frames)
         end_t = round(time.time() * 1000)
 
-        db_items = list(reversed(db_res["Items"]))
+        db_items = db_res["Items"]
         
         query_dur = end_t - start_t
         print('[GET '+ ip_hist_route +'] DDB Query time: '+ str(query_dur) +
