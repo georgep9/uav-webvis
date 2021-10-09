@@ -12,16 +12,21 @@
       <tr> <td> {{timestamp}}</td> <td> {{targets}} </td> </tr>
     </table>
 
-    <div id="vocalise-switch-container">
-      <div class="form-check form-switch">
+    <div id="switches-container">
+      <div class="form-check form-switch" id="vocalise-switch-container">
         <input class="form-check-input" type="checkbox" id="vocalise-switch" v-model="vocalise">
         <label class="form-check-label" for="vocalise-switch">Vocalise targets</label>
       </div>
+      <div class="form-check form-switch" id="live-switch-container">
+        <input class="form-check-input" type="checkbox" id="live-switch" v-model="live">
+        <label class="form-check-label" for="live-switch">Live</label>
+      </div>
     </div>
 
-    <div id="detected-history">
+    <div id="detected-history" ref="histDiv">
       <div id="inline-images" style="display: inline;" v-for="timestamp in detectedTimestamps" :key="timestamp">
-        <div class="history-item">
+        <div v-bind:class="[timestamp === selectedTimestamp ? 'selected-item' : 'history-item']" 
+          v-on:click="selectHistItem(timestamp)">
           <img class="history-img" :src="'data:image/jpeg;base64, ' + detectedImgHist[timestamp].img"/>
           <p style="text-align: center; margin: 0;">{{ time.getTimestamp(new Date(timestamp)) }}</p>
         </div>
@@ -37,7 +42,8 @@
 
 import time from '../assets/js/time-func.js';
 
-const histLoadRate = 3;
+const histLoadRate = 10;
+const histLimit = 100;
 
 export default {
   name: 'ImageProcessing',
@@ -45,10 +51,15 @@ export default {
     img: null,
     timestamp: '',
     targets: '',
-    vocalise: false,
+    vocalise: true,
+    live: true,
+
     detectedImgHist: {},
     detectedTimestamps: [],
     histLoaded: false,
+    selectedTimestamp: null,
+    fetchingHist: false,
+
     time: time
   }),
   mounted() {
@@ -65,21 +76,25 @@ export default {
       catch (e) { return; }
       if (apiData === "") { return; }
 
-      this.timestamp = time.getTimestamp(new Date(apiData.ts))
-      this.img = "data:image/jpeg;base64, " + apiData.image;
+      if (this.live) {
+        this.timestamp = time.getTimestamp(new Date(apiData.ts))
+        this.img = "data:image/jpeg;base64, " + apiData.image;
 
-      let targets_detected = "";
-      apiData.detected.forEach(target => { targets_detected += target + ", "; });
-      
-      if (this.targets !== targets_detected){
-        this.targets = targets_detected;
-        this.voiceTargets();
+        let targets_detected = "";
+        apiData.detected.forEach(target => { targets_detected += target + ", "; });
+        
+        if (this.targets !== targets_detected){
+          this.targets = targets_detected;
+          this.voiceTargets();
+        }
+
+        this.selectedTimestamp = apiData.ts;
       }
 
       if (apiData.detected.length !== '' &&
           ((this.detectedTimestamps.length === 0 ||
             this.detectedTimestamps[0] !== apiData.ts))){
-        console.log("here")
+        
         this.detectedImgHist[apiData.ts] = {
           img: apiData.image,
           detected: apiData.detected
@@ -90,9 +105,12 @@ export default {
     },
 
     fetchHist: async function () {
-      if (this.histLoaded || this.detectedTimestamps.length === 0) { return; }
-
-      console.log(this.histLoaded)
+      if (this.histLoaded || 
+          this.detectedTimestamps.length === 0 ||
+          this.fetching ||
+          this.detectedTimestamps.length > histLimit) 
+          { return; }
+      else { this.fetching = true; }
 
       const oldestTs = this.detectedTimestamps.at(-1)
       const apiArgs = `?beforeTs=${oldestTs}&nFrames=${histLoadRate}`;
@@ -105,18 +123,15 @@ export default {
         this.histLoaded = true;
         return; 
       }
-
-      console.log("oldest")
-      console.log(oldestTs)
       apiData.forEach(sample => {
-        console.log(sample.timestamp)
         this.detectedTimestamps.push(sample.timestamp);
         this.detectedImgHist[sample.timestamp] = {
           img: sample.image,
           detected: sample.detected
         }
-      })
+      });
 
+      this.fetching = false;
     },
 
     voiceTargets() {
@@ -124,10 +139,32 @@ export default {
         window.speechSynthesis.cancel();
         window.speechSynthesis.speak(new SpeechSynthesisUtterance(this.targets));
       }
+    },
+
+    selectHistItem(timestamp) {
+      if (timestamp === this.selectedTimestamp) { return; }
+
+      this.live = false;
+      this.selectedTimestamp = timestamp;
+
+      this.timestamp = time.getTimestamp(new Date(timestamp))
+      this.img = "data:image/jpeg;base64, " + this.detectedImgHist[timestamp].img
+      this.targets = "";
+      this.detectedImgHist[timestamp].detected.forEach(target => { this.targets += target + ", "; });
+
+      this.voiceTargets();
     }
   },
 
-  watch: { vocalise: function() { this.voiceTargets() } }
+  watch: { 
+    vocalise: function() { this.voiceTargets() },
+    live: function() {
+      if (this.live) { 
+        this.$refs.histDiv.scrollLeft = this.$refs.histDiv.scrollWidth;
+      }
+    }
+  }
+  
 
 }
 </script>
@@ -142,7 +179,7 @@ export default {
   max-width: 720px;
   height: 100%;
   max-height: 480px;
-  border: 1px solid rgba(44,62,80,1);
+  border: 2px solid rgba(44,62,80,1);
   background-color: rgba(44,62,80,1);
 }
 
@@ -155,19 +192,30 @@ export default {
   white-space: nowrap;
   width: 100%;
   max-width: 720px;
-  direction: rtl;
   margin-top: 20px;
+  direction: rtl;
+  padding-bottom: 5px;
 }
 
 .history-item {
   display: inline-block;
+  margin-left: 20px;
+  opacity: 0.6;
+}
+
+.selected-item {
+  display: inline-block;
+  border: 2px solid rgba(44,62,80,1);
+  margin-left: 20px;
 }
 
 .history-img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
   width: 100%;
   height: 100%;
-  max-width: 106px;
-  max-height: 80px;
+  max-width: 80px;
 }
 
 #info {
@@ -175,7 +223,7 @@ export default {
   margin-right: auto;
   width: 100%;
   max-width: 720px;
-  border: 1px solid rgba(44,62,80,1);
+  border: 2px solid rgba(44,62,80,1);
 }
 
 #info-headers {
@@ -188,9 +236,19 @@ th, td {
   padding-right: 10px;
 }
 
-#vocalise-switch-container {
+#switches-container {
   margin:0 auto;
   margin-top: 10px;
   max-width: 720px;
+  padding-bottom: 10px;
+}
+
+#vocalise-switch-container {
+  width:50%;
+  float:left;
+}
+
+#live-switch-container {
+  float:right;
 }
 </style>

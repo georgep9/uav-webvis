@@ -7,16 +7,14 @@
       "focus": true,
       "commands": [
         "conda activate wvi",
-        "cd server",
-        "python3 app.py"
+        "cd server"
       ]
     },
     {
       "name": "Client",
       "description": "Vue front-end",
       "commands": [
-        "cd client",
-        "yarn serve"
+        "cd client"
       ]
     },
     {
