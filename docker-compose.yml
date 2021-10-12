@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  nginx:
+    container_name: nginx-server
+    build:
+      context: .
+      target: nginx-server
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+  api:
+    container_name: flask-api
+    build:
+      context: .
+      target: flask-api
+    ports:
+      - "5000:5000"
+    depends_on:
+      - redis
+  redis:
+    image: "redis:alpine"

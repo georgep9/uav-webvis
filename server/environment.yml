@@ -53,4 +53,3 @@ dependencies:
     - simplejson==3.17.5
     - waitress==2.0.0
     - werkzeug==2.0.1
-prefix: /root/anaconda3/envs/wvi

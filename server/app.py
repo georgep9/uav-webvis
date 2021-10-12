@@ -14,7 +14,7 @@ CORS(app)
 logger = logging.getLogger('waitress')
 logger.setLevel(logging.DEBUG)
 
-cache = redis.Redis(host="localhost", port=6379)
+cache = redis.Redis(host="redis", port=6379)
 
 aq_live_route = '/api/aq/live'
 aq_sen_route = '/api/aq/sen'
