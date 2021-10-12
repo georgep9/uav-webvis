@@ -16,6 +16,8 @@ CORS(app)
 logger = logging.getLogger('waitress')
 logger.setLevel(logging.DEBUG)
 
+db_ttl_min = 5 # minutes
+
 cache = redis.Redis(host="localhost", port=6379)
 cache_ttl = 100 # time to live in milliseconds
 

@@ -9,18 +9,18 @@ db_ttl_min = 5 # minutes
 query_lim_max = 100 # max db items to query
 
 
-def check_cache(cache, ts, path):
+def check_cache(cache, ts, route):
     if (ts is not None):
-        data = cache.get(path+'/'+ts)
+        data = cache.get(route+'/'+ts)
         if data is not None:
-            print("[GET " + path + "] Cache hit! Returning data.")
+            print("[GET " + route + "] Cache hit! Returning data.")
             return data
 
 
-def update_cache(cache, ts, path, data):
+def update_cache(cache, ts, route, data):
     if (ts is not None and
         type(json.loads(data)) is list):
-      new_key = path+'/'+ts
+      new_key = route+'/'+ts
       cache.set(new_key, data, px=cache_ttl, nx=True)
 
 
@@ -42,7 +42,7 @@ def process_json_res(db_items):
     return (response, length)
 
 
-def get_live(ts, path):
+def get_live(ts, route):
     try:
         query_limit = 1
         from_ts = int(ts)
@@ -70,7 +70,7 @@ def get_live(ts, path):
         db_items = reversed(db_res["Items"])
         json_res, length = process_json_res(db_items)
 
-        print('[GET ' + path + '] DDB Query time: ' + str(query_dur) + ' ms. ' + \
+        print('[GET ' + route + '] DDB Query time: ' + str(query_dur) + ' ms. ' + \
             'Serving ' + str(length) + ' samples.')
         return json_res
 
@@ -79,7 +79,7 @@ def get_live(ts, path):
         return json.dumps("[ERR] Execption caught while querying database.")
 
 
-def get_sen(path, sensor, samples):
+def get_sen(route, sensor, samples):
     if samples is None or sensor is None:
         return json.dumps("[ERR] Must provide 'sensor' and 'samples' argument.")
 
@@ -108,7 +108,7 @@ def get_sen(path, sensor, samples):
         db_items = reversed(db_res["Items"])
         json_res, length = process_json_res(db_items)
         
-        print('[GET ' + path + '] DDB Query time: '  + str(query_dur) + ' ms. ' + \
+        print('[GET ' + route + '] DDB Query time: '  + str(query_dur) + ' ms. ' + \
             'Serving ' + str(length) + " samples for " + sensor + ".")
         return json_res
 
