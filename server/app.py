@@ -36,9 +36,12 @@ def hw():
 @app.route(aq_live_route, methods=['GET'])
 def get_aq_live():
     ts = request.args.get('from_ts')
-    cache_res = aq.check_cache(cache, ts, aq_live_route)
+    cache_res = aq.check_live_cache(cache, ts, aq_live_route)
     if cache_res: return cache_res
-    else: return aq.get_live(ts, aq_live_route)
+    else: 
+        data = aq.get_live(ts, aq_live_route)
+        aq.update_live_cache(cache,ts, aq_live_route, data)
+        return data
 
 
 @app.route(aq_sen_route, methods=['GET'])

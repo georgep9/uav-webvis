@@ -9,12 +9,9 @@ aq_live_route = "/api/aq/live"
 aq_hist_route = "/api/aq/sen"
 
 
-def get_aq_live(last_ts=None, from_to_arg=""):
-  req_url = api_url + aq_live_route
-  if last_ts is not None: 
-    req_url = req_url + str(from_to_arg)
-
-  response = requests.get(req_url)
+def get_aq_live(from_ts=0):
+  args={"from_ts": from_ts}
+  response = requests.get(api_url + aq_live_route, params=args)
   return response.json()
 
 

@@ -9,7 +9,7 @@ db_ttl_min = 5 # minutes
 query_lim_max = 100 # max db items to query
 
 
-def check_cache(cache, ts, route):
+def check_live_cache(cache, ts, route):
     if (ts is not None):
         data = cache.get(route+'/'+ts)
         if data is not None:
@@ -17,7 +17,7 @@ def check_cache(cache, ts, route):
             return data
 
 
-def update_cache(cache, ts, route, data):
+def update_live_cache(cache, ts, route, data):
     if (ts is not None and
         type(json.loads(data)) is list):
       new_key = route+'/'+ts
