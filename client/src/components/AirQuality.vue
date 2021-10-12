@@ -139,7 +139,7 @@ export default {
       let apiData;
       try { apiData = await fetch(apiUrl).then((res) => res.json()); }
       catch (e) { return; }
-      if (apiData.length === 0) { return; }
+      if (apiData.length === 0 || typeof apiData === "string") { return; }
 
       return apiData;
     },
@@ -153,7 +153,7 @@ export default {
       let apiData;
       try { apiData = await fetch(apiUrl).then((res) => res.json()); } 
       catch (e) { return; }
-      if (apiData.length === 0) { return; }
+      if (apiData.length === 0 || typeof apiData === "string") { return; }
 
       return apiData;
     },
