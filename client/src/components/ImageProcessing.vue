@@ -9,7 +9,7 @@
 
     <table id="info">
       <tr id="info-headers"> <th>Timestamp: </th> <th>Targets detected: </th> </tr>
-      <tr> <td> {{timestamp}}</td> <td> {{targets}} </td> </tr>
+      <tr> <td> {{time.getTimestamp(new Date(timestamp))}}</td> <td> {{targets}} </td> </tr>
     </table>
 
     <div id="switches-container">
@@ -77,7 +77,7 @@ export default {
       if (apiData === "") { return; }
 
       if (this.live) {
-        this.timestamp = time.getTimestamp(new Date(apiData.ts))
+        this.timestamp = apiData.ts;
         this.img = "data:image/jpeg;base64, " + apiData.image;
 
         let targets_detected = "";
@@ -91,7 +91,7 @@ export default {
         this.selectedTimestamp = apiData.ts;
       }
 
-      if (apiData.detected.length !== '' &&
+      if (apiData.detected.length !== 0 &&
           ((this.detectedTimestamps.length === 0 ||
             this.detectedTimestamps[0] !== apiData.ts))){
         
@@ -106,13 +106,18 @@ export default {
 
     fetchHist: async function () {
       if (this.histLoaded || 
-          this.detectedTimestamps.length === 0 ||
+          (this.detectedTimestamps.length === 0 &&
+           this.timestamp === '') ||
           this.fetching ||
           this.detectedTimestamps.length > histLimit) 
           { return; }
       else { this.fetching = true; }
 
-      const oldestTs = this.detectedTimestamps.at(-1)
+      let oldestTs = this.timestamp;
+      if (this.detectedTimestamps.length > 0) {
+        oldestTs = this.detectedTimestamps.at(-1);
+      }
+      console.log(oldestTs)
       const apiArgs = `?beforeTs=${oldestTs}&nFrames=${histLoadRate}`;
       const apiEndpoint = `${process.env.VUE_APP_API_HOST}/api/ip/hist${apiArgs}`;
 
