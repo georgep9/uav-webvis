@@ -1,5 +1,6 @@
 function convertUnixToTime (unixTime) {
-    return new Date(unixTime);
+    const t = unixTime;
+    return new Date(t);
 }
 
 function getDay (time) {
@@ -31,6 +32,10 @@ function getTimestamp (time) {
     return timestamp
 }
 
+function getTimestampFromUnix (unixTime) {
+    return getTimestamp(convertUnixToTime(unixTime));
+}
+
 function getFullTime (time) {
     const fullTime = getDay(time) + ", " + 
         getDate(time) + " " + 
@@ -40,13 +45,19 @@ function getFullTime (time) {
     return fullTime;
 }
 
+function getFullTimeFromUnix (unixTime) {
+    return getFullTime(convertUnixToTime (unixTime));
+}
+
 let time = {
     convertUnixToTime,
     getDay,
     getMonth,
     getYear,
     getTimestamp,
-    getFullTime
+    getFullTime,
+    getTimestampFromUnix,
+    getFullTimeFromUnix
 }
 export default time;
 

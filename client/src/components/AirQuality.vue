@@ -31,16 +31,29 @@
         style="padding-top: 20px"
       />
 
-      <div id="history-range">
-        <p id="history-range-text" style="margin:0"><b>Range:</b> {{charts.hist.maxHistSamples}} samples</p>
-        <input id="history-range-input" type="range" class="form-range" min="20" max="100" step="10"
-          v-model="charts.hist.maxHistSamples" v-on:input="updateHistoryWindow">
+      <div id="history-control">
+        <div id="time-slider">
+          <p id="time-slider-text" style="margin:0"><b>Latest:</b> {{time.getFullTimeFromUnix(charts.hist.fromTsUnix)}}</p>
+          <input id="time-slider-input" type="range" class="form-range" 
+            :min="timerSliderMin"
+            :max="timerSliderMax" 
+            :step="timerSliderStep"
+            v-model="timerSliderVal"
+            v-on:input="updateHistoryFrom">
+        </div>
+        <div class="form-check form-switch" id="live-switch-container">
+          <input class="form-check-input" type="checkbox" id="live-switch" 
+            v-model="charts.hist.live">
+          <label class="form-check-label" for="live-switch">Live</label>
+        </div>
+        <div id="history-range">
+          <p id="history-range-text" style="margin:0"><b>Range:</b> {{charts.hist.maxHistSamples}} samples</p>
+          <input id="history-range-input" type="range" class="form-range" min="20" max="100" step="10"
+            v-model="charts.hist.maxHistSamples" v-on:input="updateHistoryWindow">
+        </div>
       </div>
 
     </div>
-
-    
-    
     
   </div>
 </template>
@@ -81,6 +94,9 @@ export default {
         barDataMin: {}
       },
       hist: {
+        live: true,
+        fromTsUnix: null,
+        fromTsIdx: 19,
         maxHistSamples: 20,
         lineData: new Array(
           new Array(), 
@@ -89,7 +105,13 @@ export default {
       },
     },
 
-    initLoad: true
+    initLoad: true,
+    time: time,
+
+    timerSliderMin: 0,
+    timerSliderMax: 1200, // amount of 500ms in 10 mins
+    timerSliderStep: 1,
+    timerSliderVal: 1200
     
   }),
 
@@ -129,6 +151,12 @@ export default {
           this.api.lastTs = newHistData[newHistData.length - 1].ts;
         }
       }
+      
+      if (this.charts.hist.live) {
+        this.charts.hist.fromTsUnix = this.api.lastTs;
+        this.timerSliderVal = this.timerSliderMax;
+      }
+      
     },
 
     fetchLiveData: async function() {
@@ -148,6 +176,8 @@ export default {
       const apiEndpoint= `${process.env.VUE_APP_API_HOST}/api/aq/sen`
       let apiArgs = `?sensor=${this.charts.selected}`
       apiArgs += `&samples=${this.charts.hist.maxHistSamples}`;
+      if (this.charts.hist.live === false) 
+      { apiArgs += `&from=${this.charts.hist.fromTsUnix}`; }
       const apiUrl = apiEndpoint + apiArgs;
 
       let apiData;
@@ -236,6 +266,12 @@ export default {
       this.charts.refreshHist = true
     },
 
+    updateHistoryFrom: function() {
+      this.charts.hist.live = false;
+      this.charts.hist.fromTsUnix = this.api.lastTs - ((this.timerSliderMax - this.timerSliderVal) * 500);
+      this.charts.hist.refreshHist = true;
+    },
+
     updateHistoryWindow: function() {
       const selectedSamples = this.charts.hist.maxHistSamples;
       const currentSamples = this.charts.hist.lineData[0].length;
@@ -259,12 +295,36 @@ export default {
   max-width: 800px;
   padding-left:1%;
 }
-#history-range {
+
+#history-control {
   margin:0 auto;
   margin-top: 10px;
-  max-width: 800px;
+  max-width: 720px;
+  padding-bottom: 10px;
+}
+
+#time-slider {
+  margin:0 auto;
+  margin-top: 10px;
+  max-width: 720px;
+}
+
+#time-slider-input {
+  width: 50%;
+  float:left;
+}
+
+#live-switch-container {
+  float: right;
+}
+
+#history-range {
+  padding-top: 20px;
+  margin:0 auto;
+  margin-top: 10px;
+  max-width: 720px;
 }
 #history-range-input {
-  width: 180px;
+  width: 50%;
 }
 </style>
