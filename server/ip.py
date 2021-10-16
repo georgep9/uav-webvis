@@ -4,7 +4,7 @@ import simplejson as json
 import time
 
 
-db_ttl_min = 5 # minutes
+db_ttl_min = 10 # minutes
 cache_ttl = 100 # milliseconds
 
 
