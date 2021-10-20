@@ -40,9 +40,9 @@ def save_detected(ts, image, detected):
         }
         table.put_item(Item=new_db_item)
 
-        print("[IP] Item put in S3 and DDB.")
+        print('[IP] Item put in S3 and DDB.')
     except Exception as e:
-        print("[IP][ERR] Execption caught while creating item in database.")
+        print('[IP ERR] Execption caught while creating item in database.')
         print(e)
 
 
@@ -58,8 +58,12 @@ def save_detected_worker():
 
 def get_live(cache, route):
     last_frame = cache.get(route)
-    if last_frame is not None: return last_frame
-    else: return json.dumps("")
+    if last_frame is not None: 
+        print('[GET '+ route +'] Live frame cache hit! Returning data.')
+        return last_frame
+    else: 
+        print('[GET '+ route +'] No live frame in cache. Returning empty string.')
+        return json.dumps("")
 
 
 def post_live(data, cache, route):

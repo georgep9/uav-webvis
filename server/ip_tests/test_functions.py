@@ -56,4 +56,4 @@ def post_ip(n_req):
     json_post = json.dumps({"ts": timestamp, "image": image, "detected": detected})
     requests.post(api_url + ip_live_route, json = json_post)
    
-    time.sleep(1)
+    time.sleep(0.1)
