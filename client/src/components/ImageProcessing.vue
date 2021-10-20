@@ -152,7 +152,7 @@ export default {
       this.live = false;
       this.selectedTimestamp = timestamp;
 
-      this.timestamp = time.getTimestamp(new Date(timestamp))
+      this.timestamp = timestamp
       this.img = "data:image/jpeg;base64, " + this.detectedImgHist[timestamp].img
       this.targets = "";
       this.detectedImgHist[timestamp].detected.forEach(target => { this.targets += target + ", "; });
