@@ -4,6 +4,7 @@ from waitress import serve
 import simplejson as json
 import logging
 import redis
+import threading
 
 import aq
 import ip
@@ -16,12 +17,15 @@ logger.setLevel(logging.DEBUG)
 
 cache = redis.Redis(host="redis", port=6379)
 
+threading.Thread(target=ip.save_detected_worker, daemon=True).start()
+
 aq_live_route = '/api/aq/live'
 aq_sen_route = '/api/aq/sen'
 aq_post_route = '/api/aq'
 
 ip_live_route = '/api/ip/live'
 ip_hist_route = '/api/ip/hist'
+
 
 @app.route('/')
 def hw():

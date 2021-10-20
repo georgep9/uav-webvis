@@ -2,7 +2,9 @@ import boto3
 from boto3.dynamodb.conditions import Key
 import simplejson as json
 import time
+import queue
 
+save_queue = queue.Queue()
 
 db_ttl_min = 10 # minutes
 cache_ttl = 100 # milliseconds
@@ -38,11 +40,20 @@ def save_detected(ts, image, detected):
         }
         table.put_item(Item=new_db_item)
 
-        print("item put")
-        return json.dumps("Success")
+        print("[IP] Item put in S3 and DDB.")
     except Exception as e:
+        print("[IP][ERR] Execption caught while creating item in database.")
         print(e)
-        return json.dumps("[ERR] Execption caught while creating item in database.")
+
+
+def save_detected_worker():
+    while True:
+        ip_data = save_queue.get()
+        ts = ip_data[0]
+        image = ip_data[1]
+        detected = ip_data[2]
+        save_detected(ts, image, detected)
+        save_queue.task_done()
 
 
 def get_live(cache, route):
@@ -65,8 +76,11 @@ def post_live(data, cache, route):
 
     cache.set(route, json.dumps(data))
 
-    if (len(detected) == 0): return json.dumps("Success")
-    else: return save_detected(ts, image, detected)
+    if (len(detected) != 0): 
+        ip_data = [ts, image, detected]
+        save_queue.put(ip_data)
+
+    return json.dumps("Success")
 
 
 def get_hist_db_items(before_ts, n_frames, route):
