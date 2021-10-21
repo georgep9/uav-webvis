@@ -49,7 +49,9 @@ def get_live(ts, route):
         if from_ts != 0: query_limit = query_lim_max
         if from_ts < 0: raise Exception
     except Exception as e:
-      return json.dumps("[ERR] Argument 'from_ts' must be an integer of unix time.")
+        msg = "[ERR] Argument 'from_ts' must be an integer of unix time."
+        print(msg)
+        return json.dumps(msg)
 
     try:
         dynamodb = boto3.resource('dynamodb')
@@ -75,19 +77,25 @@ def get_live(ts, route):
         return json_res
 
     except Exception as e:
+        msg = "[ERR] Execption caught while querying database."
+        print(msg)
         print(e)
-        return json.dumps("[ERR] Execption caught while querying database.")
+        return json.dumps(msg)
 
 
 def get_sen(route, sensor, samples):
     if samples is None or sensor is None:
-        return json.dumps("[ERR] Must provide 'sensor' and 'samples' argument.")
+        msg = "[ERR] Must provide 'sensor' and 'samples' argument."
+        print(msg)
+        return json.dumps(msg)
 
     try:
         samples = int(samples)
         if samples < 1 or samples > 500: raise Exception
     except:
-        return json.dumps("[ERR] Argument 'samples' must be an integer between 1 and 500.")
+        msg = "[ERR] Argument 'samples' must be an integer between 1 and 500."
+        print(msg)
+        return json.dumps(msg)
 
     try:
         dynamodb = boto3.resource('dynamodb')
@@ -113,18 +121,23 @@ def get_sen(route, sensor, samples):
         return json_res
 
     except Exception as e:
+        msg = "[ERR] Execption caught while querying database."
+        print(msg)
         print(e)
-        return json.dumps("[ERR] Execption caught while querying database.")
+        return json.dumps(msg)
 
 
-def post(data):
+def post(data, route):
     try:
         ts = data["ts"]
         sensors = data["data"]
     except Exception as e:
-        print(e)
-        return json.dumps("[ERR] Bad format.")
+        msg = "[ERR] Bad format."
+        print(msg)
+        return json.dumps(msg)
     
+    start_t = round(time.time() * 1000)
+
     ttl = {'ttl': int(time.time()) + 60 * db_ttl_min}
 
     new_db_item = {"data_type": "air_quality", "timestamp": ts}
@@ -136,7 +149,13 @@ def post(data):
         dynamodb = boto3.resource('dynamodb')
         table = dynamodb.Table("uav_wvi")
         table.put_item(Item=new_db_item)
+
+        end_t = round(time.time() * 1000)
+        query_dur = end_t - start_t
+        print('[POST '+ route +']  Post time: '+ str(query_dur) +' ms.')
         return json.dumps("Success")
     except Exception as e:
+        msg = "[ERR] Execption caught while creating item in database."
+        print(msg)
         print(e)
-        return json.dumps("[ERR] Execption caught while creating item in database.")
+        return json.dumps(msg)

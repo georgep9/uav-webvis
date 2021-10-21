@@ -113,14 +113,21 @@ def post_live(data, cache, route):
             type(detected) is not list):
             raise Exception
     except:
-        return json.dumps("[ERR] Bad format.")
+        msg = "[ERR] Bad format."
+        print(msg)
+        return json.dumps(msg)
+
+    start_t = round(time.time() * 1000)
 
     update_live_frames(data, cache, route)
-
     if (len(detected) != 0): 
         ip_data = [ts, image, detected]
         save_queue.put(ip_data)
 
+    end_t = round(time.time() * 1000)
+    query_dur = end_t - start_t
+    print('[POST '+ route +']  Post time: '+ str(query_dur) +
+            ' ms with ' + str(len(detected)) + " detected.")
     return json.dumps("Success")
 
 
@@ -159,8 +166,10 @@ def get_hist_db_items(before_ts, n_frames, route):
         return db_items
 
     except Exception as e:
+        msg = "[ERR] Execption caught while querying database."
+        print(msg)
         print(e)
-        return json.dumps("[ERR] Execption caught while querying database.")
+        return json.dumps(msg)
 
 
 def get_hist_frames(db_items, route):
@@ -190,8 +199,10 @@ def get_hist_frames(db_items, route):
         return json.dumps(frames)
 
     except Exception as e:
+        msg = "[ERR] Execption caught while processing IP history."
+        print(msg)
         print(e)
-        return json.dumps("[ERR] Execption caught while processing IP history.")
+        return json.dumps(msg)
 
 
 def get_history(before_ts, n_frames, route):
@@ -199,9 +210,11 @@ def get_history(before_ts, n_frames, route):
         before_ts = int(before_ts)
         n_frames = int(n_frames)
         if (before_ts < 0 or n_frames < 0): raise Exception
-    except Exception as e:
-        return json.dumps("[ERR] Must provide 'beforeTs' and 'nFrames' " +
-        "arguments as positive integers.")
+    except Exception:
+        msg = "[ERR] Must provide 'beforeTs' and 'nFrames' " + \
+        "arguments as positive integers."
+        print(msg)
+        return json.dumps(msg)
 
     res = get_hist_db_items(before_ts, n_frames, route)
     if (type(res) is not list): return res

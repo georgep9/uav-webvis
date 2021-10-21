@@ -27,8 +27,12 @@ ip_live_route = '/api/ip/live'
 ip_hist_route = '/api/ip/hist'
 
 
+@app.before_request
+def print_address(): print(' ' + request.remote_addr, end=' ')
+
 @app.route('/')
 def hw():
+    print("Hello, world")
     return "<h1>Hello, world</h1>"
 
 @app.route(aq_live_route, methods=['GET'])
@@ -50,7 +54,7 @@ def get_aq_sen():
 @app.route(aq_post_route, methods=["POST"])
 def post_aq():
     data = json.loads(request.get_json())
-    return aq.post(data)
+    return aq.post(data, aq_post_route)
 
 @app.route(ip_live_route , methods=["GET", "POST"])
 def ip_live():
