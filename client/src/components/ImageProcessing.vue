@@ -9,7 +9,7 @@
 
     <table id="info">
       <tr id="info-headers"> <th>Timestamp: </th> <th>Targets detected: </th> </tr>
-      <tr> <td> {{time.getTimestamp(new Date(timestamp))}}</td> <td> {{targets}} </td> </tr>
+      <tr> <td> {{time.getTimestamp(new Date(selectedTimestamp))}}</td> <td> {{targets}} </td> </tr>
     </table>
 
     <div id="switches-container">
@@ -49,7 +49,7 @@ export default {
   name: 'ImageProcessing',
   data: () => ({ 
     img: null,
-    timestamp: '',
+    timestamp: null,
     targets: '',
     vocalise: true,
     live: true,
@@ -63,13 +63,19 @@ export default {
     time: time
   }),
   mounted() {
-    setInterval(this.fetchImage, 500);
+    this.update();
     setInterval(this.fetchHist, 1000);
   },
   methods: {
 
+    update: async function() {
+      for(;;) {
+        await this.fetchImage(); 
+      }
+    },
+
     fetchImage: async function() {
-      const apiEndpoint = `${process.env.VUE_APP_API_HOST}/api/ip/live`;
+      const apiEndpoint = `${process.env.VUE_APP_API_HOST}/api/ip/live?fromTs=${this.timestamp}`;
 
       let apiData;
       try { apiData = await fetch(apiEndpoint).then((res) => res.json()); }
@@ -107,7 +113,7 @@ export default {
     fetchHist: async function () {
       if (this.histLoaded || 
           (this.detectedTimestamps.length === 0 &&
-           this.timestamp === '') ||
+           this.timestamp === null) ||
           this.fetching ||
           this.detectedTimestamps.length > histLimit) 
           { return; }
@@ -152,7 +158,6 @@ export default {
       this.live = false;
       this.selectedTimestamp = timestamp;
 
-      this.timestamp = timestamp
       this.img = "data:image/jpeg;base64, " + this.detectedImgHist[timestamp].img
       this.targets = "";
       this.detectedImgHist[timestamp].detected.forEach(target => { this.targets += target + ", "; });
