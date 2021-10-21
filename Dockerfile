@@ -8,6 +8,7 @@ COPY server/ ./
 CMD ["python3", "-u", "app.py"]
 EXPOSE 5000
 
+
 FROM node:lts-alpine as build-deps
 WORKDIR /app/client
 COPY client/package.json client/yarn.lock ./
@@ -19,7 +20,6 @@ FROM nginx as nginx-server
 COPY --from=build-deps /app/client/dist /app/client/dist
 WORKDIR /app
 COPY nginx.conf ./
-
 CMD ["nginx", "-g", "daemon off;", "-c", "/app/nginx.conf"]
 EXPOSE 80
 

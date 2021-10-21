@@ -15,7 +15,7 @@ CORS(app)
 logger = logging.getLogger('waitress')
 logger.setLevel(logging.DEBUG)
 
-cache = redis.Redis(host="redis", port=6379, charset="utf-8")
+cache = redis.Redis(host="wvi-redis", port=6379, charset="utf-8")
 
 threading.Thread(target=ip.save_detected_worker, daemon=True).start()
 

@@ -1,17 +1,17 @@
 version: "3.8"
 
 services:
-  nginx:
-    container_name: nginx-server
+  wvi-nginx:
+    container_name: wvi-nginx
     build:
       context: .
       target: nginx-server
     ports:
       - "80:80"
     depends_on:
-      - api
-  api:
-    container_name: flask-api
+      - wvi-api
+  wvi-api:
+    container_name: wvi-api
     build:
       context: .
       target: flask-api
@@ -20,6 +20,7 @@ services:
     ports:
       - "5000:5000"
     depends_on:
-      - redis
-  redis:
+      - wvi-redis
+  wvi-redis:
+    container_name: wvi-redis
     image: "redis:alpine"

@@ -3,7 +3,7 @@ import json
 import time
 import random
 
-api_url = "http://127.0.0.1:5000"
+api_url = "http://127.0.0.1"
 aq_post_route = "/api/aq"
 aq_live_route = "/api/aq/live"
 aq_hist_route = "/api/aq/sen"

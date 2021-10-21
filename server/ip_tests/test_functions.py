@@ -6,7 +6,7 @@ import time
 from PIL import Image
 
 
-api_url = "http://127.0.0.1:5000"
+api_url = "http://127.0.0.1"
 ip_live_route = "/api/ip/live"
 ip_hist_route = "/api/ip/hist"
 
