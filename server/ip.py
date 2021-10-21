@@ -4,21 +4,68 @@ import simplejson as json
 import time
 import queue
 
+
 save_queue = queue.Queue()
 
 db_ttl_min = 10 # minutes
 cache_ttl = 100 # milliseconds
 
-
-def check_hist_cache(cache, full_path, route):
-    data = cache.get(full_path)
-    if (data): 
-        print('[GET '+ route +'] Cache hit! Returning response')
-        return data
+live_ts_n = 30 # max live timestamps to keep
+live_data_ttl = 1 # ttl in seconds for each live frame
 
 
-def update_hist_cache(cache, full_path, data):
-    cache.set(full_path, data, px=cache_ttl, nx=True)
+def get_live_frame(after_ts, cache, route):
+    if after_ts is None: return cache.get(route + '/latest')
+
+    live_timestamps_c = cache.get(route)
+    if live_timestamps_c is None: return None 
+    live_timestamps = live_timestamps_c.decode('utf-8').split(',')
+
+    ts_to_get = None
+    for idx, live_ts in enumerate(live_timestamps):
+        if after_ts == live_ts:
+            next_idx = idx + 1
+            if next_idx != len(live_timestamps):
+                ts_to_get = live_timestamps[next_idx]
+                break
+    if ts_to_get == None: return cache.get(route + '/latest')
+
+    live_key = route + '/' + str(ts_to_get)
+    live_frame = cache.get(live_key)
+    if live_frame is not None: return live_frame
+    else: return cache.get(route + '/latest')
+
+
+def update_live_frames(data, cache, route):
+
+    live_timestamps_c = cache.get(route)
+    if live_timestamps_c is None: live_timestamps = []
+    else: live_timestamps = live_timestamps_c.decode('utf-8').split(',')
+
+    while len(live_timestamps) >= live_ts_n:
+        live_ts_to_del = live_timestamps.pop(0)
+        live_key_to_del = route + '/' + str(live_ts_to_del)
+        cache.delete(live_key_to_del)
+    
+    new_ts = data["ts"]
+    new_key = route + '/' + str(new_ts)
+    new_value = json.dumps(data)
+    cache.set(new_key, new_value, ex=live_data_ttl)
+    cache.set(route + '/latest', new_value)
+
+    live_timestamps.append(new_ts)
+    live_timestamps_c = ','.join(str(ts) for ts in live_timestamps)
+    cache.set(route, live_timestamps_c)
+
+
+def get_live(after_ts, cache, route):
+    live_frame = get_live_frame(after_ts, cache, route)
+    if live_frame is not None: 
+        print('[GET '+ route +'] Live frame cache hit! Returning data.')
+        return live_frame
+    else: 
+        print('[GET '+ route +'] No live frame in cache. Returning empty string.')
+        return json.dumps("")
 
 
 def save_detected(ts, image, detected):
@@ -56,16 +103,6 @@ def save_detected_worker():
         save_queue.task_done()
 
 
-def get_live(cache, route):
-    last_frame = cache.get(route)
-    if last_frame is not None: 
-        print('[GET '+ route +'] Live frame cache hit! Returning data.')
-        return last_frame
-    else: 
-        print('[GET '+ route +'] No live frame in cache. Returning empty string.')
-        return json.dumps("")
-
-
 def post_live(data, cache, route):
     try:
         ts = data["ts"]
@@ -78,13 +115,24 @@ def post_live(data, cache, route):
     except:
         return json.dumps("[ERR] Bad format.")
 
-    cache.set(route, json.dumps(data))
+    update_live_frames(data, cache, route)
 
     if (len(detected) != 0): 
         ip_data = [ts, image, detected]
         save_queue.put(ip_data)
 
     return json.dumps("Success")
+
+
+def check_hist_cache(cache, full_path, route):
+    data = cache.get(full_path)
+    if (data): 
+        print('[GET '+ route +'] Cache hit! Returning response')
+        return data
+
+
+def update_hist_cache(cache, full_path, data):
+    cache.set(full_path, data, px=cache_ttl, nx=True)
 
 
 def get_hist_db_items(before_ts, n_frames, route):

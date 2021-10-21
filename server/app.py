@@ -15,7 +15,7 @@ CORS(app)
 logger = logging.getLogger('waitress')
 logger.setLevel(logging.DEBUG)
 
-cache = redis.Redis(host="redis", port=6379)
+cache = redis.Redis(host="redis", port=6379, charset="utf-8")
 
 threading.Thread(target=ip.save_detected_worker, daemon=True).start()
 
@@ -54,7 +54,9 @@ def post_aq():
 
 @app.route(ip_live_route , methods=["GET", "POST"])
 def ip_live():
-    if request.method == "GET": return ip.get_live(cache, ip_live_route)
+    if request.method == "GET": 
+        after_ts = request.args.get("afterTs")
+        return ip.get_live(after_ts, cache, ip_live_route)
     elif request.method == "POST": 
         data = json.loads(request.get_json())
         return ip.post_live(data, cache, ip_live_route)
