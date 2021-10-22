@@ -5,7 +5,7 @@ import time
 
 
 cache_ttl = 100 # milliseconds
-db_ttl_min = 10 # minutes
+db_ttl_min = 20 # minutes
 query_lim_max = 100 # max db items to query
 
 

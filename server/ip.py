@@ -7,11 +7,11 @@ import queue
 
 save_queue = queue.Queue()
 
-db_ttl_min = 10 # minutes
+db_ttl_min = 20 # minutes
 cache_ttl = 100 # milliseconds
 
 live_ts_n = 30 # max live timestamps to keep
-live_data_ttl = 1 # ttl in seconds for each live frame
+live_data_ttl = 1 # ttl in seconds for live frames
 
 
 def get_live_frame(after_ts, cache, route):
