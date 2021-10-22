@@ -49,7 +49,9 @@ def get_aq_live():
 def get_aq_sen():
     sensor = request.args.get('sensor')
     samples = request.args.get('samples')
-    return aq.get_sen(aq_sen_route, sensor, samples)
+    from_ts = request.args.get('from_ts')
+    before_ts = request.args.get('before_ts')
+    return aq.get_sen(aq_sen_route, sensor, samples, from_ts, before_ts)
 
 @app.route(aq_post_route, methods=["POST"])
 def post_aq():

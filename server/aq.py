@@ -2,6 +2,7 @@ import boto3
 from boto3.dynamodb.conditions import Key
 import simplejson as json
 import time
+import sys
 
 
 cache_ttl = 100 # milliseconds
@@ -83,19 +84,29 @@ def get_live(ts, route):
         return json.dumps(msg)
 
 
-def get_sen(route, sensor, samples):
+def get_sen(route, sensor, samples, from_ts, before_ts):
     if samples is None or sensor is None:
-        msg = "[ERR] Must provide 'sensor' and 'samples' argument."
+        msg = "[ERR] Must provide 'sensor', 'samples', 'from_ts', and 'before_ts' argument."
         print(msg)
         return json.dumps(msg)
 
+    print(from_ts)
+    print(before_ts)
+
     try:
         samples = int(samples)
-        if samples < 1 or samples > 500: raise Exception
-    except:
-        msg = "[ERR] Argument 'samples' must be an integer between 1 and 500."
+        from_ts = int(from_ts)
+        before_ts = int(before_ts)
+        if (samples < 1 or samples > 500 or 
+            from_ts < 0 or before_ts < 0): raise Exception
+    except Exception as e:
+        msg = "[ERR] Argument 'samples', 'from_ts', and 'before_ts' must be a positive integer."
+        print(e)
         print(msg)
         return json.dumps(msg)
+
+    if from_ts is None: from_ts = 0
+    if before_ts is None: before_ts = sys.maxsize
 
     try:
         dynamodb = boto3.resource('dynamodb')
@@ -106,7 +117,8 @@ def get_sen(route, sensor, samples):
         db_res = table.query(
             ProjectionExpression="#ts, #sen",
             ExpressionAttributeNames={"#ts": "timestamp", "#sen": sensor},
-            KeyConditionExpression=Key('data_type').eq("air_quality"),
+            KeyConditionExpression=Key('data_type').eq("air_quality") &
+                Key('timestamp').lte(before_ts),
             ScanIndexForward=False,
             Limit=samples)
 

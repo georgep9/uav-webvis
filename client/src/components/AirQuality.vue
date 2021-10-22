@@ -2,7 +2,7 @@
   <div id="airquality" v-if="charts.live.barData !== null && charts.hist.lineData !== null">
 
     <div id="aq-live">
-      <h4 style="text-align: center">Live Air Quality</h4>
+      <h4 style="text-align: center">Air Quality</h4>
       <AQBarChart id="aq-bar-chart" :aqData="charts.live.barData" />
     </div>
 
@@ -12,15 +12,23 @@
         <button id="sensor-button" type="button"
           style="
             font-size: max(min(1.5vw, 16px), 9px); 
-            font-weight:bold;
-            margin:1%;
-            width:12%;
-            padding:0
+            font-weight: bold;
+            margin: 1%;
+            width: 12%;
+            padding: 0
           "
           v-for="sensor in charts.sensors" :key="sensor" :ref="sensor"
           v-bind:class="[charts.selected === sensor ? 'btn btn-primary' : 'btn btn-secondary']"
           v-on:click="changeHistory(sensor)">
           {{ sensor.toUpperCase() }}
+          <p v-if='sensor.toUpperCase() === "TEMP"' style="padding:0; margin:0;">c</p>
+          <p v-if='sensor.toUpperCase() === "RED"' style="padding:0; margin:0;">ohm</p>
+          <p v-if='sensor.toUpperCase() === "PRESS"' style="padding:0; margin:0;">hPa</p>
+          <p v-if='sensor.toUpperCase() === "NH3"' style="padding:0; margin:0;">ohm</p>
+          <p v-if='sensor.toUpperCase() === "OX"' style="padding:0; margin:0;">ohm</p>
+          <p v-if='sensor.toUpperCase() === "HUM"' style="padding:0; margin:0;">%</p>
+          <p v-if='sensor.toUpperCase() === "LIGHT"' style="padding:0; margin:0;">lux</p>
+
         </button>
       </div>
 
@@ -33,7 +41,7 @@
 
       <div id="history-control">
         <div id="time-slider">
-          <p id="time-slider-text" style="margin:0"><b>Latest:</b> {{time.getFullTimeFromUnix(charts.hist.fromTsUnix)}}</p>
+          <!-- <p id="time-slider-text" style="margin:0"><b>Latest:</b> {{time.getTimestampFromUnix(charts.hist.fromTsUnix)}}</p> -->
           <input id="time-slider-input" type="range" class="form-range" 
             :min="timerSliderMin"
             :max="timerSliderMax" 
@@ -43,7 +51,7 @@
         </div>
         <div class="form-check form-switch" id="live-switch-container">
           <input class="form-check-input" type="checkbox" id="live-switch" 
-            v-model="charts.hist.live">
+            v-model="charts.hist.live" v-on:input="updateLive">
           <label class="form-check-label" for="live-switch">Live</label>
         </div>
         <div id="history-range">
@@ -51,6 +59,7 @@
           <input id="history-range-input" type="range" class="form-range" min="20" max="100" step="10"
             v-model="charts.hist.maxHistSamples" v-on:input="updateHistoryWindow">
         </div>
+        
       </div>
 
     </div>
@@ -66,6 +75,8 @@ import AQLineChart from './AQLineChart.vue';
 import time from '../assets/js/time-func.js'
 
 //const updateDelay = 1;
+
+const ms20Min = 1000*60*20;
 
 export default {
 
@@ -96,8 +107,9 @@ export default {
       hist: {
         live: true,
         fromTsUnix: null,
+        fromTsUnixTemp: null,
         fromTsIdx: 19,
-        maxHistSamples: 20,
+        maxHistSamples: 100,
         lineData: new Array(
           new Array(), 
           new Array()
@@ -109,9 +121,9 @@ export default {
     time: time,
 
     timerSliderMin: 0,
-    timerSliderMax: 1200, // amount of 500ms in 10 mins
-    timerSliderStep: 1,
-    timerSliderVal: 1200
+    timerSliderMax: 100,
+    timerSliderStep: 5,
+    timerSliderVal: 100
     
   }),
 
@@ -131,6 +143,9 @@ export default {
     },
 
     fetchData: async function () {
+
+      
+      
       let dataToFetch = "live";
       if (this.charts.refreshHist) {
         dataToFetch = "hist"; 
@@ -173,11 +188,28 @@ export default {
     },
 
     fetchSenHistData: async function() {
+
+      if (this.charts.hist.live === true) {this.charts.hist.fromTsUnixTemp = null; }
+
       const apiEndpoint= `${process.env.VUE_APP_API_HOST}/api/aq/sen`
       let apiArgs = `?sensor=${this.charts.selected}`
       apiArgs += `&samples=${this.charts.hist.maxHistSamples}`;
-      if (this.charts.hist.live === false) 
-      { apiArgs += `&from=${this.charts.hist.fromTsUnix}`; }
+      if (this.charts.hist.live === false) {
+        const fromTs = this.charts.hist.fromTsUnix;
+        const beforeTs = fromTs + ms20Min;
+        console.log(fromTs)
+        console.log(beforeTs)
+        console.log((beforeTs - fromTs) / 1000 / 60)
+        apiArgs += `&from_ts=${0}&before_ts=${this.charts.hist.fromTsUnix}`; 
+      } else {
+        
+        const fromTs = this.api.lastTs - ms20Min;
+        const beforeTs = this.api.lastTs;
+        console.log(fromTs)
+        console.log(beforeTs)
+        console.log((beforeTs - fromTs) / 1000 / 60)
+        apiArgs += `&from_ts=${fromTs}&before_ts=${beforeTs}`; 
+      }
       const apiUrl = apiEndpoint + apiArgs;
 
       let apiData;
@@ -197,7 +229,7 @@ export default {
 
       if (liveData.new) { 
         this.updateBarData(liveData.data);
-        if (this.charts.selected !== null) {
+        if (this.charts.selected !== null && this.charts.hist.live === true) {
           this.updateLineData(liveData.data);
         }
       }
@@ -240,6 +272,7 @@ export default {
     },
 
     updateLineData: function(data) {
+
       data.forEach(sample => {
         const unixTs = sample.ts;
         const ts = time.getTimestamp(new Date(unixTs))
@@ -267,9 +300,23 @@ export default {
     },
 
     updateHistoryFrom: function() {
+
+      
+
+      if (this.charts.hist.fromTsUnixTemp === null){
+        this.charts.hist.fromTsUnixTemp = this.charts.hist.fromTsUnix;
+      }
+
+      this.charts.hist.fromTsUnix = this.api.lastTs - 
+          (ms20Min - ((this.timerSliderVal / this.timerSliderMax) * ms20Min))
       this.charts.hist.live = false;
-      this.charts.hist.fromTsUnix = this.api.lastTs - ((this.timerSliderMax - this.timerSliderVal) * 500);
-      this.charts.hist.refreshHist = true;
+      this.charts.hist.lineData = new Array(
+        new Array(), 
+        new Array()
+      );
+      this.charts.refreshHist = true;
+
+      
     },
 
     updateHistoryWindow: function() {
@@ -281,6 +328,14 @@ export default {
 
       this.charts.hist.lineData[0].splice(0, startIndex);
       this.charts.hist.lineData[1].splice(0, startIndex);
+    },
+
+    updateLive: function() {
+      this.charts.hist.lineData = new Array(
+        new Array(), 
+        new Array()
+      );
+      this.charts.refreshHist = true
     }
   },
 }
@@ -310,7 +365,8 @@ export default {
 }
 
 #time-slider-input {
-  width: 50%;
+  display: inline;
+  width: 100%;
   float:left;
 }
 

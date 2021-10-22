@@ -8,7 +8,7 @@
     </div>
 
     <table id="info">
-      <tr id="info-headers"> <th>Timestamp: </th> <th>Targets detected: </th> </tr>
+      <tr id="info-headers"> <th>Timestamp</th> <th>Targets detected</th> </tr>
       <tr> <td> {{time.getTimestamp(new Date(selectedTimestamp))}}</td> <td> {{targets}} </td> </tr>
     </table>
 
@@ -23,6 +23,7 @@
       </div>
     </div>
 
+    <p style="width:100%; display: block; float: left; padding-top: 10px"><b> Detection History</b></p>
     <div id="detected-history" ref="histDiv">
       <div id="inline-images" style="display: inline;" v-for="timestamp in detectedTimestamps" :key="timestamp">
         <div v-bind:class="[timestamp === selectedTimestamp ? 'selected-item' : 'history-item']" 
@@ -202,7 +203,6 @@ export default {
   white-space: nowrap;
   width: 100%;
   max-width: 720px;
-  margin-top: 20px;
   direction: rtl;
   padding-bottom: 5px;
 }
