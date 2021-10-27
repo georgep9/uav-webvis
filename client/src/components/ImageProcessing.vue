@@ -64,16 +64,10 @@ export default {
     time: time
   }),
   mounted() {
-    this.update();
+    setInterval(this.fetchImage, 500);
     setInterval(this.fetchHist, 1000);
   },
   methods: {
-
-    update: async function() {
-      for(;;) {
-        await this.fetchImage(); 
-      }
-    },
 
     fetchImage: async function() {
       const apiEndpoint = `${process.env.VUE_APP_API_HOST}/api/ip/live?fromTs=${this.timestamp}`;
