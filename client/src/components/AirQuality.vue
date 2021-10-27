@@ -21,13 +21,13 @@
           v-bind:class="[charts.selected === sensor ? 'btn btn-primary' : 'btn btn-secondary']"
           v-on:click="changeHistory(sensor)">
           {{ sensor.toUpperCase() }}
-          <p v-if='sensor.toUpperCase() === "TEMP"' style="padding:0; margin:0;">c</p>
-          <p v-if='sensor.toUpperCase() === "RED"' style="padding:0; margin:0;">ohm</p>
-          <p v-if='sensor.toUpperCase() === "PRESS"' style="padding:0; margin:0;">hPa</p>
-          <p v-if='sensor.toUpperCase() === "NH3"' style="padding:0; margin:0;">ohm</p>
-          <p v-if='sensor.toUpperCase() === "OX"' style="padding:0; margin:0;">ohm</p>
-          <p v-if='sensor.toUpperCase() === "HUM"' style="padding:0; margin:0;">%</p>
-          <p v-if='sensor.toUpperCase() === "LIGHT"' style="padding:0; margin:0;">lux</p>
+          <p v-if='sensor.toUpperCase() === "TEMP"' style="padding:0; margin:0;">[c°]</p>
+          <p v-if='sensor.toUpperCase() === "RED"' style="padding:0; margin:0;">[Ω]</p>
+          <p v-if='sensor.toUpperCase() === "PRESS"' style="padding:0; margin:0;">[hPa]</p>
+          <p v-if='sensor.toUpperCase() === "NH3"' style="padding:0; margin:0;">[Ω]</p>
+          <p v-if='sensor.toUpperCase() === "OX"' style="padding:0; margin:0;">[Ω]</p>
+          <p v-if='sensor.toUpperCase() === "HUM"' style="padding:0; margin:0;">[%]</p>
+          <p v-if='sensor.toUpperCase() === "LIGHT"' style="padding:0; margin:0;">[lux]</p>
 
         </button>
       </div>
