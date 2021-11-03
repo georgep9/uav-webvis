@@ -39,7 +39,7 @@ docker-compose down
 
 Before anything, make sure there's a running redis server with hostname `wvi-redis`.
 If the Flask server is having trouble connecting to that hostname, change the redis `host` parameter in `server/app.py` to `"localhost"`
-and ensure redis is running locally. \
+and ensure redis is running locally.
 
 Use seperate terminals (I recommend tmux) for client and server.
 
