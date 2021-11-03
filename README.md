@@ -1,11 +1,14 @@
 # UAVPayload-Visualization
 
-[Uni project] - RESTful web interface for visualizing UAV air quality and target detection data. \
+[Uni project] - RESTful web interface for visualizing air quality and image processing data.
+
 TODO: Refactor front-end API calls into seperate files.
+
+Feel free to post some data to <wvi.geopat.io> (I've blocked saving image detections to prevent unexpected S3 costs so don't expect your history to show on reload).
 
 ## Installation
 
-Requires Docker, yarn, and Anaconda.
+Requires [Docker Compose](https://docs.docker.com/compose/install/), [yarn](https://classic.yarnpkg.com/lang/en/docs/install/#windows-stable), and [Anaconda](https://www.anaconda.com/products/individual).
 
 ### Client
 
@@ -26,6 +29,7 @@ conda env create -f environment.yml
 AWS credentials must be configured to connect with DynamoDB (see `utils/create_ddb_table.py` to create a table).
 
 ### Docker Compose
+
 Start:
 ```
 docker-compose up -d
