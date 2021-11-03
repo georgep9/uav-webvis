@@ -6,6 +6,8 @@ TODO: Refactor front-end API calls into seperate files.
 
 Feel free to post some data to <wvi.geopat.io> (I've blocked saving image detections to prevent unexpected S3 costs so don't expect your history to show on reload).
 
+![architecture](/assets/images/architecture.png)
+
 ## Installation
 
 Requires [Docker Compose](https://docs.docker.com/compose/install/), [yarn](https://classic.yarnpkg.com/lang/en/docs/install/#windows-stable), and [Anaconda](https://www.anaconda.com/products/individual).
