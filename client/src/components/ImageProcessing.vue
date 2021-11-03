@@ -22,8 +22,7 @@
         <label class="form-check-label" for="live-switch">Live</label>
       </div>
     </div>
-
-    <p style="width:100%; display: block; float: left; padding-top: 10px"><b> Detection History</b></p>
+    <p style="text-align: center;"><b>Detection History</b></p>
     <div id="detected-history" ref="histDiv">
       <div id="inline-images" style="display: inline;" v-for="timestamp in detectedTimestamps" :key="timestamp">
         <div v-bind:class="[timestamp === selectedTimestamp ? 'selected-item' : 'history-item']" 
@@ -244,7 +243,7 @@ th, td {
   margin:0 auto;
   margin-top: 10px;
   max-width: 720px;
-  padding-bottom: 10px;
+  padding-bottom: 30px;
 }
 
 #vocalise-switch-container {
