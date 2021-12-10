@@ -1,6 +1,6 @@
 # UAVPayload-Visualization
 
-[Uni project] - RESTful web interface for visualizing air quality and image processing data.
+RESTful web interface for visualizing air quality and image processing data.
 
 TODO: Refactor front-end API calls into seperate files.
 
