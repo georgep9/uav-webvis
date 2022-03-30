@@ -4,7 +4,7 @@ RESTful web interface for visualizing air quality and image processing data.
 
 TODO: Refactor front-end API calls into seperate files.
 
-Feel free to post some data to <http://wvi.geopat.io> (I've blocked saving image detections to prevent unexpected S3 costs so don't expect your history to show on reload).
+[BROKE] Feel free to post some data to <http://wvi.geopat.io> (I've blocked saving image detections to prevent unexpected S3 costs so don't expect your history to show on reload).
 
 ![architecture](/assets/images/architecture.png)
 ![screenshot](/assets/images/screenshot.png)
